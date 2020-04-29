@@ -4,7 +4,8 @@
 
 # For Maverick
 #site_prefix = "/Blog-With-GitHub-Boilerplate/"
-site_prefix = "/"
+#site_prefix = "/"
+site_prefix = "https://liukanshan.club/"
 source_dir = "../src/"
 build_dir = "../dist/"
 index_page_size = 10
