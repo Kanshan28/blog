@@ -25,14 +25,14 @@ site_logo = "${static_prefix}logo.png"
 site_build_date = "2020-04-29T17:40+08:00"
 author = "刘看山"
 email = "kansha_liu@foxmail.com"
-author_homepage = "https://www.imalan.cn"
+author_homepage = "https://www.liukanhsan.club"
 description = "TALK IS CHEAP , SHOW ME CODE !"
 key_words = ['Maverick', '刘看山', 'Galileo', 'blog']
 language = 'zh-CN'
 external_links = [
     {
-        "name": "Maverick",
-        "url": "https://github.com/AlanDecode/Maverick",
+        "name": "Github",
+        "url": "https://github.com/Kanshan28",
         "brief": "🏄‍ Go My Own Way."
     },
     {
