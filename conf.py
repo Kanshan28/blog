@@ -22,7 +22,7 @@ enable_jsdelivr = {
 
 # 站点设置
 site_name = "刘看山的博客"
-site_logo = "${static_prefix}logo.jpg"
+site_logo = "${static_prefix}logo.png"
 #site_build_date = "2019-12-18T16:51+08:00"
 site_build_date = "2020-04-29T17:40+08:00"
 author = "Kanshan"
@@ -77,7 +77,7 @@ social_links = [
 head_addon = r'''
 <meta http-equiv="x-dns-prefetch-control" content="on">
 <link rel="dns-prefetch" href="//cdn.jsdelivr.net" />
-<link rel="icon" type="image/jpg" sizes="32x32" href="${static_prefix}logo.jpg?v=yyLyaqbyRG">
+<link rel="icon" type="image/png" sizes="32x32" href="${static_prefix}logo.png?v=yyLyaqbyRG">
 '''
 
 footer_addon = ''
