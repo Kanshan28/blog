@@ -22,8 +22,7 @@ enable_jsdelivr = {
 
 # 站点设置
 site_name = "刘看山的博客"
-#site_logo = "${static_prefix}logo.jpg"
-site_logo = "${static_prefix}android-chrome-512x512.png"
+site_logo = "${static_prefix}logo.jpg"
 #site_build_date = "2019-12-18T16:51+08:00"
 site_build_date = "2020-04-29T17:40+08:00"
 author = "Kanshan"
