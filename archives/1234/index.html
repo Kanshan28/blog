@@ -1,0 +1,394 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+    <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="HandheldFriendly" content="true">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="keywords" content="Maverick,刘看山,Galileo,blog" />
+    <meta name="generator" content="Maverick 1.1" />
+    <meta name="template" content="Galileo" />
+    <link rel="alternate" type="application/rss+xml" title="刘看山的博客 &raquo; RSS 2.0" href="https://liukanshan.club/feed/index.xml" />
+    <link rel="alternate" type="application/atom+xml" title="刘看山的博客 &raquo; ATOM 1.0" href="https://liukanshan.club/feed/atom/index.xml" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/galileo-3f4dcc35c9.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/ExSearch/ExSearch-182e5a8868.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/katex.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700&display=swap">
+    <script>
+        var ExSearchConfig = {
+            root: "",
+            api: "https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/b8d1603fd7a5089589eb68a551d4f400.json"
+        }
+    </script>
+    
+<title>Shell中if的-e,-d,-f使用 - 刘看山的博客</title>
+<meta name="author" content="Kanshan" />
+<meta name="description" content="Shell编程中用来判断的一些参数说明" />
+<meta property="og:title" content="Shell中if的-e,-d,-f使用 - 刘看山的博客" />
+<meta property="og:description" content="Shell编程中用来判断的一些参数说明" />
+<meta property="og:site_name" content="刘看山的博客" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://liukanshan.club/archives/1234/" />
+<meta property="og:image" content="" />
+<meta property="article:published_time" content="2020-04-30T22:55:00-00.00" />
+<meta name="twitter:title" content="Shell中if的-e,-d,-f使用 - 刘看山的博客" />
+<meta name="twitter:description" content="Shell编程中用来判断的一些参数说明" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:image" content="" />
+
+
+    
+<meta http-equiv="x-dns-prefetch-control" content="on">
+<link rel="dns-prefetch" href="//cdn.jsdelivr.net" />
+<link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/logo-32.png?v=yyLyaqbyRG">
+<link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/logo-16.png?v=yyLyaqbyRG">
+
+    </head>
+    
+    <body>
+        
+        <div class="container">
+            <header id="ga-header">
+                <div first>
+                    <aside id="ga-brand">
+                        <h1 class="brand"><a class="no-style" href="https://liukanshan.club/">刘看山的博客</a></h1>
+                        <p>TALK IS CHEAP , SHOW ME CODE !</p>
+                    </aside>
+                </div>
+                <div second id="ga-nav">
+                    <nav class="navs">
+                        <ul><li><a class="ga-highlight" href="https://liukanshan.club/" target="_self">首页</a></li><span class="separator">·</span><li><a class="ga-highlight" href="https://liukanshan.club/archives/" target="_self">归档</a></li><span class="separator">·</span><li><a class="ga-highlight" href="https://liukanshan.club/about/" target="_self">关于</a></li><span class="separator">·</span><li><a href="#" target="_self" class="search-form-input ga-highlight">搜索</a></li></ul>
+                    </nav>
+                </div>
+            </header>
+            <div class="wrapper">
+                
+<main>    
+    <section class="ga-section ga-content">
+        <article class="yue">
+            <h1 class="ga-post_title">Shell中if的-e,-d,-f使用</h1>
+            <span class="ga-post_meta ga-mono">
+                <span>Kanshan</span>
+                <time>
+                    2020-04-30
+                </time>
+                
+                in <a no-style class="category" href="https://liukanshan.club/category/Linux_shell_if/">
+                    Linux_shell_if
+                </a>
+                
+                
+            </span>
+            <div class="ga-content_body">
+                <p><figure style="flex: 66.66666666666667" ><img width="1240" height="930" src="https://upload-images.jianshu.io/upload_images/3507931-2100088cfcf436c8.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" /><figcaption>wallhaven-478940.jpg</figcaption></figure></p>
+<ul>
+<li><strong>文件比较运算符</strong> <code>if [参数]</code></li>
+</ul>
+<p>For example</p>
+
+<pre><code>if [ -e /etc/systemd/system/getty@tty1.service.d ]
+then
+    echo "login file is exist"
+else
+    mkdir "/etc/systemd/system/getty@tty1.service.d"
+fi</code></pre>
+<table>
+<thead><tr>
+<th style="text-align:center">序号</th>
+<th style="text-align:center">参数</th>
+<th style="text-align:center">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">-e filename</td>
+<td style="text-align:center">如果 filename存在，则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">-d filename</td>
+<td style="text-align:center">如果 filename为目录，则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">-f filename</td>
+<td style="text-align:center">如果 filename为常规文件，则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">-L filename</td>
+<td style="text-align:center">如果 filename为符号链接，则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">5</td>
+<td style="text-align:center">-r filename</td>
+<td style="text-align:center">如果 filename可读，则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">6</td>
+<td style="text-align:center">-w filename</td>
+<td style="text-align:center">如果 filename可写，则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">7</td>
+<td style="text-align:center">-x filename</td>
+<td style="text-align:center">如果 filename可执行，则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">8</td>
+<td style="text-align:center">-s filename</td>
+<td style="text-align:center">如果文件长度不为0，则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">9</td>
+<td style="text-align:center">-h filename</td>
+<td style="text-align:center">如果文件是软链接，则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">10</td>
+<td style="text-align:center">file1 -nt file2</td>
+<td style="text-align:center">如果 file1比 file2新，则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">file1 -ot file2</td>
+<td style="text-align:center">如果 file1比 file2旧，则为真</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>整数变量表达式</strong><code>if [参数]</code></li>
+</ul>
+<table>
+<thead><tr>
+<th style="text-align:center">序号</th>
+<th style="text-align:center">参数</th>
+<th style="text-align:center">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">-eq</td>
+<td style="text-align:center">等于</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">-ne</td>
+<td style="text-align:center">不等于</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">-gt</td>
+<td style="text-align:center">大于</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">-ge</td>
+<td style="text-align:center">大于等于</td>
+</tr>
+<tr>
+<td style="text-align:center">5</td>
+<td style="text-align:center">-lt</td>
+<td style="text-align:center">小于</td>
+</tr>
+<tr>
+<td style="text-align:center">6</td>
+<td style="text-align:center">-le</td>
+<td style="text-align:center">小于等于</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>字符串变量表达式</strong> <code>if [参数]</code></li>
+</ul>
+<table>
+<thead><tr>
+<th style="text-align:center">序号</th>
+<th style="text-align:center">参数</th>
+<th style="text-align:center">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center"><code>$a=$b</code></td>
+<td style="text-align:center">如果string1等于string2，则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center"><code>$string1 !=  $string2</code></td>
+<td style="text-align:center">如果string1不等于string2，则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center"><code>-n $string</code></td>
+<td style="text-align:center">如果string 非空(非0），返回0(true)</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center"><code>-z $string</code></td>
+<td style="text-align:center">如果string 为空，则为真</td>
+</tr>
+<tr>
+<td style="text-align:center">5</td>
+<td style="text-align:center"><code>$sting</code></td>
+<td style="text-align:center">如果string 非空，返回0 (和-n类似)</td>
+</tr>
+<tr>
+<td style="text-align:center">6</td>
+<td style="text-align:center"><code>! 表达式</code></td>
+<td style="text-align:center">条件表达式的相反[逻辑非]</td>
+</tr>
+<tr>
+<td style="text-align:center">7</td>
+<td style="text-align:center"><code>表达式1  –a  表达式2</code></td>
+<td style="text-align:center">条件表达式的并列[逻辑与]</td>
+</tr>
+<tr>
+<td style="text-align:center">8</td>
+<td style="text-align:center"><code>表达式1  –o  表达式2</code></td>
+<td style="text-align:center">条件表达式的或[逻辑或]</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>特殊变量</strong> <code>if [参数]</code></li>
+</ul>
+<table>
+<thead><tr>
+<th style="text-align:center">序号</th>
+<th style="text-align:center">参数</th>
+<th style="text-align:center">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">$0</td>
+<td style="text-align:center">当前脚本的文件名</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:center">$n</td>
+<td style="text-align:center">传递给脚本或函数的参数。n 是一个数字，表示第几个参数。例如，第一个参数是$1，第二个参数是$2</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:center">$#</td>
+<td style="text-align:center">传递给脚本或函数的参数个数</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:center">$*</td>
+<td style="text-align:center">传递给脚本或函数的所有参数</td>
+</tr>
+<tr>
+<td style="text-align:center">5</td>
+<td style="text-align:center">$@</td>
+<td style="text-align:center">传递给脚本或函数的所有参数。被双引号(" ")包含时，与 $* 稍有不同</td>
+</tr>
+<tr>
+<td style="text-align:center">6</td>
+<td style="text-align:center">$?</td>
+<td style="text-align:center">上个命令的退出状态，或函数的返回值</td>
+</tr>
+<tr>
+<td style="text-align:center">7</td>
+<td style="text-align:center">$$</td>
+<td style="text-align:center">当前Shell进程ID。对于 Shell 脚本，就是这些脚本所在的进程ID</td>
+</tr>
+<tr>
+<td style="text-align:center">8</td>
+<td style="text-align:center">$!</td>
+<td style="text-align:center">Shell最后运行的后台Process的PID(后台运行的最后一个进程的<a href="https://www.baidu.com/s?wd=%E8%BF%9B%E7%A8%8BID&amp;tn=SE_PcZhidaonwhc_ngpagmjz&amp;rsv_dl=gh_pc_zhidao">进程ID</a>号)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>参考处[<code>Shell特殊变量：Shell $0, $#, $*, $@, $?, $$和命令行参数</code>]</li>
+</ul>
+
+            </div>
+        </article>
+        <div id="ga-tags">
+    
+    <span class="ga-tag">
+        <a class="ga-highlight" href="https://liukanshan.club/tag/Shell/">#Shell</a>
+    </span>
+    
+</div>
+    </section>
+
+    
+<section id="ga-content_pager">
+
+    <div class="next">
+        <h3>没有了</h3>
+        <p class="yue">这是最新的文章</p>
+    </div>
+
+
+    <div class="prev">
+        <a class="ga-highlight" href="https://liukanshan.club/archives/typography/">Hello World!</a>
+        <p class="yue">这是一篇示例文章，在这里你可以看到常用页面元素的显示效果。</p>
+    </div>
+
+</section>
+
+
+    
+
+</main>
+
+                <footer class="ga-mono" id="ga-footer">
+                    <section>
+                        <span id="ga-uptime"></span>
+                        <span class="brand">刘看山的博客</span>
+                    </section>
+                    <section>
+                        <p class="copyright">
+                            <span>Copyright © 2020 Kanshan</span>
+                            <span>Powered by <a no-style href="https://github.com/AlanDecode/Maverick" target="_blank">Maverick & Galileo</a></span>
+                        </p>
+                        <div class="copyright">
+                            <span class="footer-addon">
+                                
+                            </span>
+                            <nav class="social-links">
+                                <ul><li><a class="no-style" title="GitHub" href="https://github.com/Kanshan28" target="_blank"><i class="gi gi-github"></i>GitHub</a></li><span class="separator">·</span><li><a class="no-style" title="Weibo" href="https://weibo.com/5366743913/" target="_blank"><i class="gi gi-weibo"></i>Weibo</a></li></ul>
+                            </nav>
+                        </div>
+                    </section>
+                    <script>
+                        var site_build_date = "2020-04-29T17:40+08:00"
+                    </script>
+                    <script src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/galileo-dc4baa7cf4.js"></script>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!--katex-->
+    <script defer src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/katex.min.js"></script>
+    <script>
+    mathOpts = {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "$", right: "$", display: false},
+            {left: "\\(", right: "\\)", display: false}
+        ]
+    };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/auto-render.min.js" onload="renderMathInElement(document.body, mathOpts);"></script>
+
+    <script src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/ExSearch/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/ExSearch/ExSearch-493cb9cd89.js"></script>
+
+    
+    </body>
+</html>
