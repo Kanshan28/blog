@@ -77,7 +77,8 @@ social_links = [
 head_addon = r'''
 <meta http-equiv="x-dns-prefetch-control" content="on">
 <link rel="dns-prefetch" href="//cdn.jsdelivr.net" />
-<link rel="icon" type="image/png" sizes="32x32" href="${static_prefix}logo.png?v=yyLyaqbyRG">
+<link rel="icon" type="image/png" sizes="32x32" href="${static_prefix}logo-32.png?v=yyLyaqbyRG">
+<link rel="icon" type="image/png" sizes="16x16" href="${static_prefix}logo-16.png?v=yyLyaqbyRG">
 '''
 
 footer_addon = ''
