@@ -12,10 +12,6 @@ tags:
 excerpt: Shell编程中用来判断的一些参数说明
 ---
 
-
-
-![wallhaven-478940.jpg](https://upload-images.jianshu.io/upload_images/3507931-2100088cfcf436c8.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
 - **文件比较运算符** `if [参数]`
 
 For example
