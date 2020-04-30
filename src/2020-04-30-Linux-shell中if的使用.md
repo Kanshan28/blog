@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Shell中if的-e,-d,-f使用
-slug: 1234
+slug: 2020-04-30-Linux-shell中if的使用
 date: 2020-4-30 22:55
 status: publish
 author: Kanshan
