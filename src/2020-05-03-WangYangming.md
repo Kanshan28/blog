@@ -1,7 +1,7 @@
 ---
 layout: post
 title: 阳明心学及其现代意义-王德峰
-slug: 2020-05-03王阳明心学及其现代意义-王德峰
+slug: 2020-05-03-WangYangming
 date: 2020-5-03 10:08
 status: publish
 author: Kanshan
