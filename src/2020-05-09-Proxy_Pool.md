@@ -128,6 +128,7 @@ excerpt: 这是一个Python代理池的项目。
 #### 4.定义代理IP的数据模型类
 
 - 目标：定义代理IP的数据模型类
+
 - 步骤：
   - 定义`Proxy`类，继承object
   - 实现`__init__`方法，负责初始化，包含如下字段：
@@ -141,5 +142,239 @@ excerpt: 这是一个Python代理池的项目。
     - disable_domains：不可用域名列表，有些代理IP在某些域名下不可用，但是在其他域名下可用
   - 配置文件：`settings.py` 中定义MAX_SCORE=50，表示代理IP的默认最高分数
   - 提供`__str__`方法，返回数据字符串
-- 代码
+  
+- 代码：
+
+  ```python
+  #domain.py
+  
+  from settings import MAX_SCORE
+  
+  
+  class Proxy(object):
+  
+      def __init__(self, ip, port, protocol=-1, nick_type=-1, speed=-1, area=None, score=MAX_SCORE, disable_domain=[]):
+          # ip：代理的IP地址
+          self.ip = ip
+          # port：代理IP的端口号
+          self.port = port
+          # protocol：代理IP支持的协议类型，http是0，https是1，https和http都支持是2
+          self.protocol = protocol
+          # nick_type：代理IP的匿名程度，高匿：0，匿名：1，透明：2
+          self.nick_type = nick_type
+          # speed：代理IP的响应速度，单位s
+          self.speed = speed
+          # area：代理IP所在的地区
+          self.area = area
+          # score：代理IP的评分，用于衡量代理的可用性，默认分之可以通过配置文件进行配置，在进行代理可用性检查的时候，每遇到一次请求失败就减1分，减到0的时候就从池子中删除，如果检查代理可用，就恢复默认分值。
+          self.score = score
+          # disable_domains：不可用域名列表，有些代理IP在某些域名下不可用，但是在其他域名下
+          self.disable_domain = disable_domain
+          # 配置文件：settings.py中定义MAX_SCORE = 50，表示代理IP的默认最高分数
+  
+      # 3.提供__str__方法，返回数据字符串
+      def __str__(self):
+          #返回数据字符串
+          return str(self.__dict__)
+  ```
+
+  ```python
+#settings.py
+  
+  # 配置文件：settings.py中定义MAX_SCORE = 50，表示代理IP的默认最高分数MAX_SCORE = 50
+  ```
+
+#### 5.实现代理池工具模块
+
+- 步骤
+  - 实现日志模块
+  - http模块 
+
+##### 5.1实现日志模块
+
+###### 5.1.1.为什么要实现日志模块
+
+- 能够方便的对进程进行调试
+- 能够方便记录程序的运行状态
+- 能够记录错误信息
+
+###### 5.1.2.日志模块的实现
+
+- 目标：实现日志模块，用于记录日志
+- 前提：日志模块在网上有很多现成的实现，我们开发的时候，通常不会自己写，而是拿来主义。
+- 步骤：
+
+- 拷贝笔记日志代码到项目中
+
+```python
+#utils/log.py
+import sys
+import logging
+
+#默认的配置
+DEFAULT_LOG_LEVEL = logging.INFO   # 默认等级
+DEFAULT_LOG_FMT = '%(asctime)s %(filename)s [line:%(lineno)d] %(levelname)s: %(message)s'  # 默认日志格式
+DEFUALT_LOG_DATEFMT = '%Y-%m-%d %H:%M:%S'  # 默认时间格式
+DEFAULT_LOG_FILENAME = 'log.log'  # 默认日志文件名称
+
+class Logger(object):
+
+    def __init__(self):
+        # 1. 获取一个logger对象
+        self._logger = logging.getLogger()
+        # 2. 设置format对象
+        self.formatter = logging.Formatter(fmt=DEFAULT_LOG_FMT,datefmt=DEFUALT_LOG_DATEFMT)
+        # 3. 设置日志输出
+        # 3.1 设置文件日志模式
+        self._logger.addHandler(self._get_file_handler(DEFAULT_LOG_FILENAME))
+        # 3.2 设置终端日志模式self._logger.addHandler(self._get_console_handler())
+        # 4. 设置日志等级
+        self._logger.setLevel(DEFAULT_LOG_LEVEL)
+
+    def _get_file_handler(self, filename):
+        '''返回一个文件日志handler'''
+        # 1. 获取一个文件日志handler
+        filehandler = logging.FileHandler(filename=filename,encoding="utf-8")
+        # 2. 设置日志格式
+        filehandler.setFormatter(self.formatter)
+        # 3. 返回
+        return filehandler
+    def _get_console_handler(self):
+        '''返回一个输出到终端日志handler'''
+        # 1. 获取一个输出到终端日志handler
+        console_handler = logging.StreamHandler(sys.stdout)
+        # 2. 设置日志格式
+        console_handler.setFormatter(self.formatter)
+        # 3. 返回handler
+        return console_handler
+
+    @property
+
+    def logger(self):
+        return self._logger
+# 初始化并配一个logger对象，达到单例的
+# 使用时，直接导入logger就可以使用
+logger = Logger().logger
+
+if __name__ == '__main__':
+    logger.debug("调试信息")
+    logger.info("状态信息")
+    logger.warning("警告信息")
+    logger.error("错误信息")
+    logger.critical("严重错误信息")
+```
+
+- 把日志相关配置信息放到配置文件中
+
+```python
+#settings.py
+MAX_SCORE = 50
+
+#日志的配置信息
+import logging
+
+#默认的配置
+DEFAULT_LOG_LEVEL = logging.INFO   # 默认等级
+DEFAULT_LOG_FMT = '%(asctime)s %(filename)s [line:%(lineno)d] %(levelname)s: %(message)s'  # 默认日志格式
+DEFUALT_LOG_DATEFMT = '%Y-%m-%d %H:%M:%S'  # 默认时间格式
+DEFAULT_LOG_FILENAME = 'log.log'  # 默认日志文件名称
+
+```
+
+- 修改日志代码，使用配置文件中的配置信息
+
+```python 
+import sys
+import logging
+
+#导入settingss中日志配置信息
+from settings import DEFAULT_LOG_FMT, DEFUALT_LOG_DATEFMT, DEFAULT_LOG_FILENAME, DEFAULT_LOG_LEVEL
+```
+
+
+
+##### 5.2. http模块
+
+我们从代理IP网站上抓取代理IP和检验代理IP的时候，为了不容易被服务器识别为一个爬虫，我们最好提供随机的User-Agent请求头。
+
+- 目标：获取随机User-Agent的请求头
+- 步骤：
+  - 准备User-Agent的列表
+  - 实现一个方法，获取随机User-Agent的请求头
+- 代码：
+
+```python
+#-*- coding:utf-8 -*-
+import random
+"""
+5.2. http模块
+
+我们从代理IP网站上抓取代理IP和检验代理IP的时候，为了不容易被服务器识别为一个爬虫，我们最好提供随机的User-Agent请求头。
+
+目标：获取随机User-Agent的请求头
+步骤：
+    1.准备User-Agent的列表
+    2.实现一个方法，获取随机User-Agent的请求头
+"""
+
+#1.准备User-Agent列表
+USER_AGENTS = [
+    "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50",
+    "Mozilla/5.0 (Windows; U; Windows NT 6.1; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50",
+    "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0",
+    "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; .NET4.0C; .NET4.0E; .NET CLR 2.0.50727; .NET CLR 3.0.30729; .NET CLR 3.5.30729; InfoPath.3; rv:11.0) like Gecko",
+    "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)",
+    "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0)",
+    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)",
+    "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:2.0.1) Gecko/20100101 Firefox/4.0.1",
+    "Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20100101 Firefox/4.0.1",
+    "Opera/9.80 (Macintosh; Intel Mac OS X 10.6.8; U; en) Presto/2.8.131 Version/11.11",
+    "Opera/9.80 (Windows NT 6.1; U; en) Presto/2.8.131 Version/11.11",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_0) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.56 Safari/535.11",
+    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Maxthon 2.0)",
+    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; TencentTraveler 4.0)",
+    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)",
+    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; The World)",
+    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Trident/4.0; SE 2.X MetaSr 1.0; SE 2.X MetaSr 1.0; .NET CLR 2.0.50727; SE 2.X MetaSr 1.0)",
+    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; 360SE)",
+    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Avant Browser)",
+    "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)",
+    "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5",
+    "Mozilla/5.0 (iPod; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5",
+    "Mozilla/5.0 (iPad; U; CPU OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5",
+    "Mozilla/5.0 (Linux; U; Android 2.3.7; en-us; Nexus One Build/FRF91) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1",
+    "MQQBrowser/26 Mozilla/5.0 (Linux; U; Android 2.3.7; zh-cn; MB200 Build/GRJ22; CyanogenMod-7) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1",
+    "Opera/9.80 (Android 2.3.4; Linux; Opera Mobi/build-1107180945; U; en-GB) Presto/2.8.149 Version/11.10",
+    "Mozilla/5.0 (Linux; U; Android 3.0; en-us; Xoom Build/HRI39) AppleWebKit/534.13 (KHTML, like Gecko) Version/4.0 Safari/534.13",
+    "Mozilla/5.0 (BlackBerry; U; BlackBerry 9800; en) AppleWebKit/534.1+ (KHTML, like Gecko) Version/6.0.0.337 Mobile Safari/534.1+",
+    "Mozilla/5.0 (hp-tablet; Linux; hpwOS/3.0.0; U; en-US) AppleWebKit/534.6 (KHTML, like Gecko) wOSBrowser/233.70 Safari/534.6 TouchPad/1.0",
+    "Mozilla/5.0 (SymbianOS/9.4; Series60/5.0 NokiaN97-1/20.0.019; Profile/MIDP-2.1 Configuration/CLDC-1.1) AppleWebKit/525 (KHTML, like Gecko) BrowserNG/7.1.18124",
+    "Mozilla/5.0 (compatible; MSIE 9.0; Windows Phone OS 7.5; Trident/5.0; IEMobile/9.0; HTC; Titan)",
+    "UCWEB7.0.2.37/28/999",
+    "NOKIA5700/ UCWEB7.0.2.37/28/999",
+    "Openwave/ UCWEB7.0.2.37/28/999",
+    "Mozilla/4.0 (compatible; MSIE 6.0; ) Opera/UCWEB7.0.2.37/28/999",
+    # iPhone 6：
+    "Mozilla/6.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/8.0 Mobile/10A5376e Safari/8536.25",
+]
+
+
+#2.实现一个方法，获取随机User-Agent的请求头
+def get_request_headers():
+    headers = {
+        'User-Agent': random.choice(USER_AGENTS),
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+        'Accept-language': 'zh-CN,zh;q=0.9',
+        'Accept-Encoding': 'gzip, deflate,br',
+        'Connection': 'keep-alive',
+    }
+    return headers
+
+
+if __name__ == '__main__':
+    # 测试随机与否
+    print(get_request_headers())
+    print(get_request_headers())
+```
 
