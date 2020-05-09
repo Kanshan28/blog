@@ -19,7 +19,7 @@
     <script>
         var ExSearchConfig = {
             root: "",
-            api: "https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/e643e04e3750ccefd62ded24bddf6d30.json"
+            api: "https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/f7c9cf2204d37334fefe6915b4e9950b.json"
         }
     </script>
     
@@ -242,43 +242,62 @@
 </ul>
 </li>
 <li><p>代码：</p>
-<p>```python
-#domain.py</p>
-<p>from settings import MAX_SCORE</p>
+<div class="highlight"><pre><span></span><span class="c1"># -*- coding:utf-8 -*-</span>
+<span class="c1">#domin.py</span>
+
+<span class="kn">from</span> <span class="nn">settings</span> <span class="kn">import</span> <span class="n">MAX_SCORE</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">4.定义代理IP的数据模型类</span>
+<span class="sd">目标：定义代理IP的数据模型类</span>
+<span class="sd">步骤：</span>
+
+<span class="sd">1.定义Proxy类，继承object</span>
+<span class="sd">2.实现__init__方法，负责初始化，包含如下字段：</span>
+<span class="sd">    ip：代理的IP地址</span>
+<span class="sd">    port：代理IP的端口号</span>
+<span class="sd">    protocol：代理IP支持的协议类型，http是0，https是1，https和http都支持是2</span>
+<span class="sd">    nick_type：代理IP的匿名程度，高匿：0，匿名：1，透明：2</span>
+<span class="sd">    speed：代理IP的响应速度，单位s</span>
+<span class="sd">    area：代理IP所在的地区</span>
+<span class="sd">    score：代理IP的评分，用于衡量代理的可用性，默认分之可以通过配置文件进行配置，在进行代理可用性检查的时候，每遇到一次请求失败就减1分，减到0的时候就从池子中删除，如果检查代理可用，就恢复默认分值。</span>
+<span class="sd">    disable_domains：不可用域名列表，有些代理IP在某些域名下不可用，但是在其他域名下可用</span>
+<span class="sd">    配置文件：`settings.py` 中定义MAX_SCORE=50，表示代理IP的默认最高分数</span>
+<span class="sd">3.提供__str__方法，返回数据字符串</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="k">class</span> <span class="nc">Proxy</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">nick_type</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">speed</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">area</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">score</span><span class="o">=</span><span class="n">MAX_SCORE</span><span class="p">,</span> <span class="n">disable_domain</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="c1"># ip：代理的IP地址</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ip</span> <span class="o">=</span> <span class="n">ip</span>
+        <span class="c1"># port：代理IP的端口号</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
+      <span class="c1"># protocol：代理IP支持的协议类型，http是0，https是1，https和http都支持是2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protocol</span> <span class="o">=</span> <span class="n">protocol</span>
+      <span class="c1"># nick_type：代理IP的匿名程度，高匿：0，匿名：1，透明：2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nick_type</span> <span class="o">=</span> <span class="n">nick_type</span>
+        <span class="c1"># speed：代理IP的响应速度，单位s</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="n">speed</span>
+        <span class="c1"># area：代理IP所在的地区</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">area</span> <span class="o">=</span> <span class="n">area</span>
+        <span class="c1"># score：代理IP的评分，用于衡量代理的可用性，默认分之可以通过配置文件进行配置，在进行代理可用性检查的时候，每遇到一次请求失败就减1分，减到0的时候就从池子中删除，如果检查代理可用，就恢复默认分值。</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="n">score</span>
+        <span class="c1"># disable_domains：不可用域名列表，有些代理IP在某些域名下不可用，但是在其他域名下</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">disable_domain</span> <span class="o">=</span> <span class="n">disable_domain</span>
+        <span class="c1"># 配置文件：settings.py中定义MAX_SCORE = 50，表示代理IP的默认最高分数</span>
+
+    <span class="c1"># 3.提供__str__方法，返回数据字符串</span>
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#返回数据字符串</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
+</pre></div>
+<div class="highlight"><pre><span></span><span class="c1">#settings.py</span>
+
+<span class="c1"># 配置文件：settings.py中定义MAX_SCORE = 50，表示代理IP的默认最高分数MAX_SCORE = 50</span>
+</pre></div>
 </li>
 </ul>
-<p>class Proxy(object):</p>
-
-<pre><code>  def __init__(self, ip, port, protocol=-1, nick_type=-1, speed=-1, area=None, score=MAX_SCORE, disable_domain=[]):
-      # ip：代理的IP地址
-      self.ip = ip
-      # port：代理IP的端口号
-      self.port = port
-      # protocol：代理IP支持的协议类型，http是0，https是1，https和http都支持是2
-      self.protocol = protocol
-      # nick_type：代理IP的匿名程度，高匿：0，匿名：1，透明：2
-      self.nick_type = nick_type
-      # speed：代理IP的响应速度，单位s
-      self.speed = speed
-      # area：代理IP所在的地区
-      self.area = area
-      # score：代理IP的评分，用于衡量代理的可用性，默认分之可以通过配置文件进行配置，在进行代理可用性检查的时候，每遇到一次请求失败就减1分，减到0的时候就从池子中删除，如果检查代理可用，就恢复默认分值。
-      self.score = score
-      # disable_domains：不可用域名列表，有些代理IP在某些域名下不可用，但是在其他域名下
-      self.disable_domain = disable_domain
-      # 配置文件：settings.py中定义MAX_SCORE = 50，表示代理IP的默认最高分数
-
-  # 3.提供__str__方法，返回数据字符串
-  def __str__(self):
-      #返回数据字符串
-      return str(self.__dict__)
-</code></pre>
-
-<pre><code>
-  ```python
-#settings.py
-
-  # 配置文件：settings.py中定义MAX_SCORE = 50，表示代理IP的默认最高分数MAX_SCORE = 50</code></pre>
 <h4>5.实现代理池工具模块</h4>
 <ul>
 <li>步骤<ul>

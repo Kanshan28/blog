@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>刘看山的博客</title><link>https://liukanshan.club/</link><description>学问之道无他，求其放心而已!</description><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/logo.png</url><title>刘看山的博客</title><link>https://liukanshan.club/</link></image><language>zh-CN</language><lastBuildDate>Sat, 09 May 2020 15:49:15 +0806</lastBuildDate><pubDate>Sat, 09 May 2020 15:49:15 +0806</pubDate><item><title>Hello World!</title><link>https://liukanshan.club/archives/typography/</link><description>&lt;div class="notice"&gt;这是一篇示例文章，在这里你可以看到常用页面元素的显示效果，同时也是 Markdown 语法的参考文章。保留或者删除本文，开始自己的创作吧！&lt;/div&gt;&lt;h2&gt;L2 Heading&lt;/h2&gt;
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>刘看山的博客</title><link>https://liukanshan.club/</link><description>学问之道无他，求其放心而已!</description><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/logo.png</url><title>刘看山的博客</title><link>https://liukanshan.club/</link></image><language>zh-CN</language><lastBuildDate>Sat, 09 May 2020 15:54:40 +0806</lastBuildDate><pubDate>Sat, 09 May 2020 15:54:40 +0806</pubDate><item><title>Hello World!</title><link>https://liukanshan.club/archives/typography/</link><description>&lt;div class="notice"&gt;这是一篇示例文章，在这里你可以看到常用页面元素的显示效果，同时也是 Markdown 语法的参考文章。保留或者删除本文，开始自己的创作吧！&lt;/div&gt;&lt;h2&gt;L2 Heading&lt;/h2&gt;
 &lt;h3&gt;L3 Heading&lt;/h3&gt;
 &lt;h4&gt;L4 Heading&lt;/h4&gt;
 &lt;h5&gt;L5 Heading&lt;/h5&gt;
@@ -597,43 +597,62 @@ fi&lt;/code&gt;&lt;/pre&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;li&gt;&lt;p&gt;代码：&lt;/p&gt;
-&lt;p&gt;```python
-#domain.py&lt;/p&gt;
-&lt;p&gt;from settings import MAX_SCORE&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;# -*- coding:utf-8 -*-&lt;/span&gt;
+&lt;span class="c1"&gt;#domin.py&lt;/span&gt;
+
+&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;settings&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;MAX_SCORE&lt;/span&gt;
+&lt;span class="sd"&gt;&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+&lt;span class="sd"&gt;4.定义代理IP的数据模型类&lt;/span&gt;
+&lt;span class="sd"&gt;目标：定义代理IP的数据模型类&lt;/span&gt;
+&lt;span class="sd"&gt;步骤：&lt;/span&gt;
+
+&lt;span class="sd"&gt;1.定义Proxy类，继承object&lt;/span&gt;
+&lt;span class="sd"&gt;2.实现__init__方法，负责初始化，包含如下字段：&lt;/span&gt;
+&lt;span class="sd"&gt;    ip：代理的IP地址&lt;/span&gt;
+&lt;span class="sd"&gt;    port：代理IP的端口号&lt;/span&gt;
+&lt;span class="sd"&gt;    protocol：代理IP支持的协议类型，http是0，https是1，https和http都支持是2&lt;/span&gt;
+&lt;span class="sd"&gt;    nick_type：代理IP的匿名程度，高匿：0，匿名：1，透明：2&lt;/span&gt;
+&lt;span class="sd"&gt;    speed：代理IP的响应速度，单位s&lt;/span&gt;
+&lt;span class="sd"&gt;    area：代理IP所在的地区&lt;/span&gt;
+&lt;span class="sd"&gt;    score：代理IP的评分，用于衡量代理的可用性，默认分之可以通过配置文件进行配置，在进行代理可用性检查的时候，每遇到一次请求失败就减1分，减到0的时候就从池子中删除，如果检查代理可用，就恢复默认分值。&lt;/span&gt;
+&lt;span class="sd"&gt;    disable_domains：不可用域名列表，有些代理IP在某些域名下不可用，但是在其他域名下可用&lt;/span&gt;
+&lt;span class="sd"&gt;    配置文件：`settings.py` 中定义MAX_SCORE=50，表示代理IP的默认最高分数&lt;/span&gt;
+&lt;span class="sd"&gt;3.提供__str__方法，返回数据字符串&lt;/span&gt;
+
+&lt;span class="sd"&gt;&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Proxy&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;object&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__init__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ip&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;port&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;protocol&lt;/span&gt;&lt;span class="o"&gt;=-&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;nick_type&lt;/span&gt;&lt;span class="o"&gt;=-&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;speed&lt;/span&gt;&lt;span class="o"&gt;=-&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;area&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="kc"&gt;None&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;score&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;MAX_SCORE&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;disable_domain&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="p"&gt;[]):&lt;/span&gt;
+        &lt;span class="c1"&gt;# ip：代理的IP地址&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ip&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ip&lt;/span&gt;
+        &lt;span class="c1"&gt;# port：代理IP的端口号&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;port&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;port&lt;/span&gt;
+      &lt;span class="c1"&gt;# protocol：代理IP支持的协议类型，http是0，https是1，https和http都支持是2&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;protocol&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;protocol&lt;/span&gt;
+      &lt;span class="c1"&gt;# nick_type：代理IP的匿名程度，高匿：0，匿名：1，透明：2&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;nick_type&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;nick_type&lt;/span&gt;
+        &lt;span class="c1"&gt;# speed：代理IP的响应速度，单位s&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;speed&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;speed&lt;/span&gt;
+        &lt;span class="c1"&gt;# area：代理IP所在的地区&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;area&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;area&lt;/span&gt;
+        &lt;span class="c1"&gt;# score：代理IP的评分，用于衡量代理的可用性，默认分之可以通过配置文件进行配置，在进行代理可用性检查的时候，每遇到一次请求失败就减1分，减到0的时候就从池子中删除，如果检查代理可用，就恢复默认分值。&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;score&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;score&lt;/span&gt;
+        &lt;span class="c1"&gt;# disable_domains：不可用域名列表，有些代理IP在某些域名下不可用，但是在其他域名下&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;disable_domain&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;disable_domain&lt;/span&gt;
+        &lt;span class="c1"&gt;# 配置文件：settings.py中定义MAX_SCORE = 50，表示代理IP的默认最高分数&lt;/span&gt;
+
+    &lt;span class="c1"&gt;# 3.提供__str__方法，返回数据字符串&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__str__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="c1"&gt;#返回数据字符串&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="nb"&gt;str&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="vm"&gt;__dict__&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;#settings.py&lt;/span&gt;
+
+&lt;span class="c1"&gt;# 配置文件：settings.py中定义MAX_SCORE = 50，表示代理IP的默认最高分数MAX_SCORE = 50&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;class Proxy(object):&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;  def __init__(self, ip, port, protocol=-1, nick_type=-1, speed=-1, area=None, score=MAX_SCORE, disable_domain=[]):
-      # ip：代理的IP地址
-      self.ip = ip
-      # port：代理IP的端口号
-      self.port = port
-      # protocol：代理IP支持的协议类型，http是0，https是1，https和http都支持是2
-      self.protocol = protocol
-      # nick_type：代理IP的匿名程度，高匿：0，匿名：1，透明：2
-      self.nick_type = nick_type
-      # speed：代理IP的响应速度，单位s
-      self.speed = speed
-      # area：代理IP所在的地区
-      self.area = area
-      # score：代理IP的评分，用于衡量代理的可用性，默认分之可以通过配置文件进行配置，在进行代理可用性检查的时候，每遇到一次请求失败就减1分，减到0的时候就从池子中删除，如果检查代理可用，就恢复默认分值。
-      self.score = score
-      # disable_domains：不可用域名列表，有些代理IP在某些域名下不可用，但是在其他域名下
-      self.disable_domain = disable_domain
-      # 配置文件：settings.py中定义MAX_SCORE = 50，表示代理IP的默认最高分数
-
-  # 3.提供__str__方法，返回数据字符串
-  def __str__(self):
-      #返回数据字符串
-      return str(self.__dict__)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;pre&gt;&lt;code&gt;
-  ```python
-#settings.py
-
-  # 配置文件：settings.py中定义MAX_SCORE = 50，表示代理IP的默认最高分数MAX_SCORE = 50&lt;/code&gt;&lt;/pre&gt;
 &lt;h4&gt;5.实现代理池工具模块&lt;/h4&gt;
 &lt;ul&gt;
 &lt;li&gt;步骤&lt;ul&gt;
