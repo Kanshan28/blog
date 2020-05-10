@@ -555,20 +555,7 @@ TEST_TIMEOUT = 10
   ```python
   # -*- coding:utf-8 -*-
   #mongo_pool.py
-  """
   
-  7.实现代理池的数据库模块
-  作用：用于对proxies集合进行数据库的相关操作
-  目标：实现对数据库增删改查相关操作
-  步骤：
-     1.在init中，建立数据连接，获取要操作的集合，在del方法中关闭数据库连接
-     2.提供基础的增删改查功能
-          1实现插入功能
-          2实现修改功能
-          3实现删除代理：根据代理的IP删除代理
-          4查询所有代理IP的功能
-  
-  """
   from pymongo import MongoClient  #http://www.imooc.com/article/43478  使用方法
   from settings import MONGO_URL  #https://juejin.im/post/5d525b1af265da03b31bc2d5
   from utils.log import logger
@@ -618,17 +605,15 @@ TEST_TIMEOUT = 10
               item.pop('_id')
               proxy = Proxy(**item)
               yield proxy
-  
   #测试是否可用
-  #if __name__ == '__main__':
-  #    mongo = MongoPool()
-  
-      #proxy = Proxy('202.104.113.36', port='53281')
-      #mongo.inser_one(proxy)
-      # mongo.update_one(proxy)
-      #mongo.delete_one(proxy)
-      #for proxy in mongo.find_all():
-       #   print(proxy)
+  if __name__ == '__main__':
+      mongo = MongoPool()
+      proxy = Proxy('202.104.113.36', port='53281')
+      mongo.inser_one(proxy)
+      mongo.update_one(proxy)
+      mongo.delete_one(proxy)
+      for proxy in mongo.find_all():
+          print(proxy)
   ```
   
   ```python
@@ -636,6 +621,8 @@ TEST_TIMEOUT = 10
   #MongoDB数据库的URL
   MONGO_URL = 'mongodb://127.0.0.1:27017'
   ```
+  
+  
   
   
   
