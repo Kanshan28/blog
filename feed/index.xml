@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>刘看山的博客</title><link>https://liukanshan.club/</link><description>学问之道无他，求其放心而已!</description><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/logo.png</url><title>刘看山的博客</title><link>https://liukanshan.club/</link></image><language>zh-CN</language><lastBuildDate>Sun, 10 May 2020 15:46:00 +0806</lastBuildDate><pubDate>Sun, 10 May 2020 15:46:00 +0806</pubDate><item><title>Hello World!</title><link>https://liukanshan.club/archives/typography/</link><description>&lt;div class="notice"&gt;这是一篇示例文章，在这里你可以看到常用页面元素的显示效果，同时也是 Markdown 语法的参考文章。保留或者删除本文，开始自己的创作吧！&lt;/div&gt;&lt;h2&gt;L2 Heading&lt;/h2&gt;
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>刘看山的博客</title><link>https://liukanshan.club/</link><description>学问之道无他，求其放心而已!</description><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><image><url>https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/logo.png</url><title>刘看山的博客</title><link>https://liukanshan.club/</link></image><language>zh-CN</language><lastBuildDate>Sun, 10 May 2020 15:52:40 +0806</lastBuildDate><pubDate>Sun, 10 May 2020 15:52:40 +0806</pubDate><item><title>Hello World!</title><link>https://liukanshan.club/archives/typography/</link><description>&lt;div class="notice"&gt;这是一篇示例文章，在这里你可以看到常用页面元素的显示效果，同时也是 Markdown 语法的参考文章。保留或者删除本文，开始自己的创作吧！&lt;/div&gt;&lt;h2&gt;L2 Heading&lt;/h2&gt;
 &lt;h3&gt;L3 Heading&lt;/h3&gt;
 &lt;h4&gt;L4 Heading&lt;/h4&gt;
 &lt;h5&gt;L5 Heading&lt;/h5&gt;
@@ -1000,23 +1000,8 @@ TEST_TIMEOUT = 10&lt;/code&gt;&lt;/pre&gt;
 &lt;/ul&gt;
 &lt;p&gt;```python
 # -&lt;em&gt;- coding:utf-8 -&lt;/em&gt;-
-#mongo_pool.py
-"""&lt;/p&gt;
-&lt;p&gt;7.实现代理池的数据库模块
-作用：用于对proxies集合进行数据库的相关操作
-目标：实现对数据库增删改查相关操作
-步骤：
-   1.在init中，建立数据连接，获取要操作的集合，在del方法中关闭数据库连接
-   2.提供基础的增删改查功能&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;    1实现插入功能
-    2实现修改功能
-    3实现删除代理：根据代理的IP删除代理
-    4查询所有代理IP的功能
-
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;"""
-from pymongo import MongoClient  #&lt;a href="http://www.imooc.com/article/43478"&gt;http://www.imooc.com/article/43478&lt;/a&gt;  使用方法
+#mongo_pool.py&lt;/p&gt;
+&lt;p&gt;from pymongo import MongoClient  #&lt;a href="http://www.imooc.com/article/43478"&gt;http://www.imooc.com/article/43478&lt;/a&gt;  使用方法
 from settings import MONGO_URL  #&lt;a href="https://juejin.im/post/5d525b1af265da03b31bc2d5"&gt;https://juejin.im/post/5d525b1af265da03b31bc2d5&lt;/a&gt;
 from utils.log import logger
 from domain import Proxy&lt;/p&gt;
@@ -1065,19 +1050,16 @@ from domain import Proxy&lt;/p&gt;
           item.pop('_id')
           proxy = Proxy(**item)
           yield proxy
-
 &lt;/code&gt;&lt;/pre&gt;
 &lt;h1&gt;测试是否可用&lt;/h1&gt;
-&lt;h1&gt;if &lt;strong&gt;name&lt;/strong&gt; == '&lt;strong&gt;main&lt;/strong&gt;':&lt;/h1&gt;
-&lt;h1&gt;mongo = MongoPool()&lt;/h1&gt;
-
-&lt;pre&gt;&lt;code&gt;  #proxy = Proxy('202.104.113.36', port='53281')
-  #mongo.inser_one(proxy)
-  # mongo.update_one(proxy)
-  #mongo.delete_one(proxy)
-  #for proxy in mongo.find_all():
-   #   print(proxy)
-&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;if &lt;strong&gt;name&lt;/strong&gt; == '&lt;strong&gt;main&lt;/strong&gt;':
+      mongo = MongoPool()
+      proxy = Proxy('202.104.113.36', port='53281')
+      mongo.inser_one(proxy)
+      mongo.update_one(proxy)
+      mongo.delete_one(proxy)
+      for proxy in mongo.find_all():
+          print(proxy)&lt;/p&gt;
 
 &lt;pre&gt;&lt;code&gt;
   ```python
