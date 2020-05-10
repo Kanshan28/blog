@@ -553,10 +553,9 @@ TEST_TIMEOUT = 10
   - 代码
   
   ```python
-  # -*- coding:utf-8 -*-
   #mongo_pool.py
   
-  from pymongo import MongoClient  #http://www.imooc.com/article/43478  使用方法
+  from pymongo import MongoClient  #http://www.imooc.com/article/43478
   from settings import MONGO_URL  #https://juejin.im/post/5d525b1af265da03b31bc2d5
   from utils.log import logger
   from domain import Proxy
@@ -605,8 +604,8 @@ TEST_TIMEOUT = 10
               item.pop('_id')
               proxy = Proxy(**item)
               yield proxy
-  #测试是否可用
-  if __name__ == '__main__':
+  
+  if __name__ == '__main__':   #测试是否可用
       mongo = MongoPool()
       proxy = Proxy('202.104.113.36', port='53281')
       mongo.inser_one(proxy)
