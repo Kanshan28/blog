@@ -52,7 +52,7 @@ excerpt: 这是一个Python代理池的项目。
 
 ##### 2.1代理池的工作流程
 
-![1587552588571](.\images\2020-5-9-1.png)
+![代理池的工作流程](.\images\2020-5-9-1.png)
 
 
 
@@ -96,7 +96,7 @@ excerpt: 这是一个Python代理池的项目。
 
 ##### 2.3 代理池的项目结构
 
-![1587555736092](.\images\2020-5-9-2.png)
+![代理池的项目结构](.\images\2020-5-9-2.png)
 
 
 
@@ -398,3 +398,249 @@ if __name__ == '__main__':
     print(get_request_headers())
 ```
 
+
+
+#### 6.实现代理池的校验模块
+
+- 目标：检验代理IP速度，匿名程度以及支持的协议类型
+- 步骤：
+  - 代理IP速度，就是从发送请求到获取响应的时间间隔
+  - 检验代理IP速度和匿名程度：
+    - 匿名程度检查：
+      - 对http://httpbin.org/get  或 https://httpbin.org/get 发送请求
+      - 如果响应origin中有',' 分割的两个IP就是透明代理IP
+      - 如果响应的headers中包含Proxy-Connection 说明是匿名代理IP
+      - 否则就是高匿名IP
+  - 检查代理IP协议类型
+    - 如果 http://httpbin.org/get 发送请求可以成功，说明支持http协议
+    - 如果 https://httpbin.org/get 发送请求可以成功，说明支持https协议
+- 代码 
+
+```python
+#httpbin_validator.py
+"""
+6.实现代理池的校验模块
+目标：检验代理IP速度，匿名程度以及支持的协议类型
+步骤：
+
+检验代理IP速度和匿名程度：
+    1.代理IP速度，就是从发送请求到获取响应的时间间隔
+    2.匿名程度检查：
+        1.对http://httpbin.org/get  或 https://httpbin.org/get 发送请求
+        2.如果响应origin中有',' 分割的两个IP就是透明代理IP
+        3.如果响应的headers中包含Proxy-Connection 说明是匿名代理IP
+        4.否则就是高匿名IP
+检查代理IP协议类型
+    如果 http://httpbin.org/get 发送请求可以成功，说明支持http协议
+    如果 https://httpbin.org/get 发送请求可以成功，说明支持https协议
+
+"""
+import json
+import time
+import requests
+
+from domain import Proxy
+from utils.http import get_request_headers
+from settings import TEST_TIMEOUT
+from utils.log import logger
+
+def check_proxy(proxy):
+    """
+    用于检查指定 代理IP  响应速度  匿名程度  支持协议类型
+    :param proxy:代理IP模型对象
+    :return:检查后的代理IP模型对象
+    """
+
+    #准备代理IP字典
+    proxies = {
+        'http':'http://{}:{}.format(proxy.ip, proxy.port)',
+        'https': 'https://{}:{}.format(proxy.ip, proxy.port)',
+    }
+
+    #测试该代理IP
+    http, http_nick_type, http_speed = __check_http_proxies(proxies)
+    https, https_nick_type, https_speed = __check_http_proxies(proxies, False)
+
+    #代理IP支持的协议类型，http是0， https是1， http和https都支持是2
+    if http and https:
+        proxy.protocol = 2
+        proxy.nick_type = http_nick_type
+        proxy.speed = http_speed
+    elif http:
+        proxy.protocol = 0
+        proxy.nick_type = http_nick_type
+        proxy.speed = http_speed
+    elif https:
+        proxy.protocol = 1
+        proxy.nick_type = https_nick_type
+        proxy.speed = https_speed
+    else:
+        proxy.protocol = -1
+        proxy.nick_type = -1
+        proxy.speed = -1
+    return proxy
+
+
+def __check_http_proxies(proxies, is_http=True):
+    #匿名类型： 高匿：0， 匿名：1， 透明：2
+    nick_type = -1
+    #响应速度，单位s
+    speed = -1
+
+    if is_http:
+        test_url = 'http://httpbin.org/get'
+    else:
+        test_url = 'https://httpbin.org/get'
+
+    try:
+        #获取开始时间
+        start = time.time()
+        #发送请求，获取响应速度
+        response = requests.get(test_url, headers=get_request_headers(), proxies=proxies, timeout=TEST_TIMEOUT)
+
+        if response.ok:
+            #计算响应速度
+            speed = round(time.time() - start, 2)
+            #匿名程度
+            #把响应的json字符串转换成字典
+            dic = json.loads(response.text)
+            #获取来源IP:origin
+            origin = dic['origin']
+            proxy_connection = dic['headers'].get('Proxy-Connection', None)
+            # 1.如果响应origin中有',' 分割的两个IP就是透明代理IP
+            if ',' in origin:
+                nick_type = 2
+            # 2.如果响应的headers中包含Proxy-Connection 说明是匿名代理IP
+            elif proxy_connection:
+                nick_type = 1
+            # 3.否则就是高匿名IP
+            else:
+                nick_type = 0
+            return True, nick_type, speed
+        return False, nick_type, speed
+    except Exception as ex:
+        #logger.exception(ex)
+        return False, nick_type, speed
+
+#测试是否可用
+
+if __name__ == '__main__':
+    proxy = Proxy('45.76.162.126', port='8080')
+    print(check_proxy(proxy))
+```
+
+```pyhton
+#settings.py
+#测试代理IP的超时时间
+TEST_TIMEOUT = 10
+```
+
+
+
+#### 7.实现代理池的数据库模块
+
+- 作用：用于对proxies集合进行数据库的相关 操作
+
+- 目标：实现对数据库增删改查相关操作
+
+- 步骤：
+  - 在`__init__`中，建立数据连接，获取要操作的集合，在`__del__`方法中关闭数据库连接
+  - 提供基础的增删改查功能
+    - 实现插入功能
+    - 实现修改功能
+    - 实现删除代理：根据代理的IP删除代理
+    - 查询所有代理IP的功能
+  - 代码
+  
+  ```python
+  # -*- coding:utf-8 -*-
+  #mongo_pool.py
+  """
+  
+  7.实现代理池的数据库模块
+  作用：用于对proxies集合进行数据库的相关操作
+  目标：实现对数据库增删改查相关操作
+  步骤：
+     1.在init中，建立数据连接，获取要操作的集合，在del方法中关闭数据库连接
+     2.提供基础的增删改查功能
+          1实现插入功能
+          2实现修改功能
+          3实现删除代理：根据代理的IP删除代理
+          4查询所有代理IP的功能
+  
+  """
+  from pymongo import MongoClient  #http://www.imooc.com/article/43478  使用方法
+  from settings import MONGO_URL  #https://juejin.im/post/5d525b1af265da03b31bc2d5
+  from utils.log import logger
+  from domain import Proxy
+  
+  
+  class MongoPool(object):
+  
+      def __init__(self):
+          #在 int中，建立数据连接，获取要操作的集合
+          self.client = MongoClient(MONGO_URL)
+          #获取要操作的集合
+          self.proxies = self.client['proxies_pool']['proxies']
+  
+      def __del__(self):
+          #关闭数据库连接
+          self.client.close()
+  
+      def inser_one(self, proxy):
+          """实现插入功能"""
+  
+          count = self.proxies.count_documents({'_id':proxy.ip})
+          if count == 0:
+              #我们使用proxy.ip作为MongoDB的主键： _id
+              dic = proxy.__dict__
+              dic['_id'] = proxy.ip
+              self.proxies.insert_one(dic)
+              logger.info("插入新的代理：{}".format(proxy))
+          else:
+              logger.warning("已存在的代理：{}".format(proxy))
+  
+      def update_one(self, proxy):
+          """实现修改功能"""
+          self.proxies.update_one({'_id': proxy.ip}, {'$set': proxy.__dict__})
+          logger.warning("代理更新：{}".format(proxy))
+  
+      def delete_one(self, proxy):
+          """实现删除代理，根据代理的IP删除代理"""
+          self.proxies.delete_one({'_id':proxy.ip})
+          logger.info("删除代理IP:{}".format(proxy))
+  
+      def find_all(self):
+          """查询所有代理IP的功能"""
+          cursor = self.proxies.find()
+          for item in cursor:
+              #删除_id这个key
+              item.pop('_id')
+              proxy = Proxy(**item)
+              yield proxy
+  
+  #测试是否可用
+  #if __name__ == '__main__':
+  #    mongo = MongoPool()
+  
+      #proxy = Proxy('202.104.113.36', port='53281')
+      #mongo.inser_one(proxy)
+      # mongo.update_one(proxy)
+      #mongo.delete_one(proxy)
+      #for proxy in mongo.find_all():
+       #   print(proxy)
+  ```
+  
+  ```python
+  #settings.py
+  #MongoDB数据库的URL
+  MONGO_URL = 'mongodb://127.0.0.1:27017'
+  ```
+  
+  
+  
+  - 提供代理API模块使用的功能
+    - 实现查询功能：根据条件进行查询 ，可以指定查询数量，先分数降序，速度升序，保证优质的代理IP在上面
+    - 实现根据协议类型和要访问网站的域名，获取代理IP列表
+    - 实现根据协议类型和要访问完整的域名，随机获取一个代理IP
+    - 实现把指定域名添加到指定IP的disable_domain列表中
