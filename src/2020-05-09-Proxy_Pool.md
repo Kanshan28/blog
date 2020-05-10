@@ -545,75 +545,81 @@ TEST_TIMEOUT = 10
 
 - 步骤：
   - 在`__init__`中，建立数据连接，获取要操作的集合，在`__del__`方法中关闭数据库连接
+  
   - 提供基础的增删改查功能
     - 实现插入功能
     - 实现修改功能
     - 实现删除代理：根据代理的IP删除代理
     - 查询所有代理IP的功能
+    
   - 代码
   
-  ```python
-  #mongo_pool.py
+    ```python
+    #mongo_pool.py
+    
+    from pymongo import MongoClient  #http://www.imooc.com/article/43478
+    from settings import MONGO_URL  #https://juejin.im/post/5d525b1af265da03b31bc2d5
+    from utils.log import logger
+    from domain import Proxy
+    
+    
+    class MongoPool(object):
+    
+        def __init__(self):
+            #在 int中，建立数据连接，获取要操作的集合
+            self.client = MongoClient(MONGO_URL)
+            #获取要操作的集合
+            self.proxies = self.client['proxies_pool']['proxies']
+    
+        def __del__(self):
+            #关闭数据库连接
+            self.client.close()
+    
+        def inser_one(self, proxy):
+            """实现插入功能"""
+    
+            count = self.proxies.count_documents({'_id':proxy.ip})
+            if count == 0:
+                #我们使用proxy.ip作为MongoDB的主键： _id
+                dic = proxy.__dict__
+                dic['_id'] = proxy.ip
+                self.proxies.insert_one(dic)
+                logger.info("插入新的代理：{}".format(proxy))
+            else:
+                logger.warning("已存在的代理：{}".format(proxy))
+    
+        def update_one(self, proxy):
+            """实现修改功能"""
+            self.proxies.update_one({'_id': proxy.ip}, {'$set': proxy.__dict__})
+            logger.warning("代理更新：{}".format(proxy))
+    
+        def delete_one(self, proxy):
+            """实现删除代理，根据代理的IP删除代理"""
+            self.proxies.delete_one({'_id':proxy.ip})
+            logger.info("删除代理IP:{}".format(proxy))
+    
+        def find_all(self):
+            """查询所有代理IP的功能"""
+            cursor = self.proxies.find()
+            for item in cursor:
+                #删除_id这个key
+                item.pop('_id')
+                proxy = Proxy(**item)
+                yield proxy
+    
+    if __name__ == '__main__':   #测试是否可用
+        mongo = MongoPool()
+        proxy = Proxy('202.104.113.36', port='53281')
+        mongo.inser_one(proxy)
+        mongo.update_one(proxy)
+        mongo.delete_one(proxy)
+        for proxy in mongo.find_all():
+            print(proxy)
+    ```
   
-  from pymongo import MongoClient  #http://www.imooc.com/article/43478
-  from settings import MONGO_URL  #https://juejin.im/post/5d525b1af265da03b31bc2d5
-  from utils.log import logger
-  from domain import Proxy
+    
   
-  
-  class MongoPool(object):
-  
-      def __init__(self):
-          #在 int中，建立数据连接，获取要操作的集合
-          self.client = MongoClient(MONGO_URL)
-          #获取要操作的集合
-          self.proxies = self.client['proxies_pool']['proxies']
-  
-      def __del__(self):
-          #关闭数据库连接
-          self.client.close()
-  
-      def inser_one(self, proxy):
-          """实现插入功能"""
-  
-          count = self.proxies.count_documents({'_id':proxy.ip})
-          if count == 0:
-              #我们使用proxy.ip作为MongoDB的主键： _id
-              dic = proxy.__dict__
-              dic['_id'] = proxy.ip
-              self.proxies.insert_one(dic)
-              logger.info("插入新的代理：{}".format(proxy))
-          else:
-              logger.warning("已存在的代理：{}".format(proxy))
-  
-      def update_one(self, proxy):
-          """实现修改功能"""
-          self.proxies.update_one({'_id': proxy.ip}, {'$set': proxy.__dict__})
-          logger.warning("代理更新：{}".format(proxy))
-  
-      def delete_one(self, proxy):
-          """实现删除代理，根据代理的IP删除代理"""
-          self.proxies.delete_one({'_id':proxy.ip})
-          logger.info("删除代理IP:{}".format(proxy))
-  
-      def find_all(self):
-          """查询所有代理IP的功能"""
-          cursor = self.proxies.find()
-          for item in cursor:
-              #删除_id这个key
-              item.pop('_id')
-              proxy = Proxy(**item)
-              yield proxy
-  
-  if __name__ == '__main__':   #测试是否可用
-      mongo = MongoPool()
-      proxy = Proxy('202.104.113.36', port='53281')
-      mongo.inser_one(proxy)
-      mongo.update_one(proxy)
-      mongo.delete_one(proxy)
-      for proxy in mongo.find_all():
-          print(proxy)
-  ```
+    
   
   ```python
   #settings.py
