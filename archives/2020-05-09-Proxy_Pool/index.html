@@ -19,7 +19,7 @@
     <script>
         var ExSearchConfig = {
             root: "",
-            api: "https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/7343a8ef4c556525accd981d0d807c35.json"
+            api: "https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/5abdf80d1618e79042a1ee11734c4b12.json"
         }
     </script>
     
@@ -627,10 +627,8 @@
 TEST_TIMEOUT = 10</code></pre>
 <h4>7.实现代理池的数据库模块</h4>
 <ul>
-<li><p>作用：用于对proxies集合进行数据库的相关 操作</p>
-</li>
-<li><p>目标：实现对数据库增删改查相关操作</p>
-</li>
+<li>作用：用于对proxies集合进行数据库的相关 操作</li>
+<li>目标：实现对数据库增删改查相关操作</li>
 <li><p>步骤：</p>
 <ul>
 <li><p>在<code>__init__</code>中，建立数据连接，获取要操作的集合，在<code>__del__</code>方法中关闭数据库连接</p>
@@ -643,10 +641,16 @@ TEST_TIMEOUT = 10</code></pre>
 <li>查询所有代理IP的功能</li>
 </ul>
 </li>
-<li><p>代码</p>
-</li>
 </ul>
 </li>
+<li>提供代理API模块使用的功能<ul>
+<li>实现查询功能：根据条件进行查询 ，可以指定查询数量，先分数降序，速度升序，保证优质的代理IP在上面</li>
+<li>实现根据协议类型和要访问网站的域名，获取代理IP列表</li>
+<li>实现根据协议类型和要访问完整的域名，随机获取一个代理IP</li>
+<li>实现把指定域名添加到指定IP的disable_domain列表中</li>
+</ul>
+</li>
+<li>代码：</li>
 </ul>
 <div class="highlight"><pre><span></span><span class="c1"># -*- coding:utf-8 -*-</span>
 <span class="c1">#mongo_pool.py</span>
@@ -821,15 +825,151 @@ TEST_TIMEOUT = 10</code></pre>
 <span class="c1">#MongoDB数据库的URL</span>
 <span class="n">MONGO_URL</span> <span class="o">=</span> <span class="s1">&#39;mongodb://127.0.0.1:27017&#39;</span>
 </pre></div>
+<h4>8.实现代理池的爬虫模块</h4>
+<h5>8.1爬虫模块的需求</h5>
 <ul>
-<li>提供代理API模块使用的功能<ul>
-<li>实现查询功能：根据条件进行查询 ，可以指定查询数量，先分数降序，速度升序，保证优质的代理IP在上面</li>
-<li>实现根据协议类型和要访问网站的域名，获取代理IP列表</li>
-<li>实现根据协议类型和要访问完整的域名，随机获取一个代理IP</li>
-<li>实现把指定域名添加到指定IP的disable_domain列表中</li>
+<li>需求：抓取各个代理IP网站上的免费代理IP,进行检测，如果可用，存储到数据库中</li>
+<li>需要抓取代理IP的页面如下：<ul>
+<li><a href="https://www.xicidaili.com/nn/1">西刺代理</a>：<a href="https://www.xicidaili.com/nn/1">https://www.xicidaili.com/nn/1</a></li>
+<li><a href="http://www.ip3366.net/free/?stype=1&amp;page=1">ip3366代理</a>： <a href="http://www.ip3366.net/free/?stype=1&amp;page=1">http://www.ip3366.net/free/?stype=1&amp;page=1</a> </li>
+<li><a href="https://www.kuaidaili.com/free/inha/1/">快代理</a>： <a href="https://www.kuaidaili.com/free/inha/1/">https://www.kuaidaili.com/free/inha/1/</a> </li>
+<li><a href="https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1">proxylistplus代理</a>： <a href="https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1">https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1</a> </li>
 </ul>
 </li>
 </ul>
+<h5>8.2 爬虫模块的设计思路</h5>
+<ul>
+<li>通用爬虫：通过指定URL列表，分组XPATH和组内XPATH,来提取不同网站的代理IP<ul>
+<li>原因：代理IP网站的结构几乎是Table，页面结构类似</li>
+</ul>
+</li>
+<li>具体爬虫：用于抓取集体代理IP网站<ul>
+<li>通过继承通用爬虫实现网站的抓取吗，一般只需要指定爬虫的URL列表，分组的XPATH，组内的XPATH就可以了。</li>
+<li>如果该网站有特殊反爬手段，可以通过重写某些方法实现反爬</li>
+</ul>
+</li>
+<li>爬虫运行模块：启动爬虫，抓取代理IP，如果可用，就存储到数据库中；<ul>
+<li>通过配置文件来控制启动哪些爬虫，增加扩展性；如果将来我们遇到返回json格式的代理，单独写一个爬虫配置就好了。</li>
+</ul>
+</li>
+</ul>
+<h5>8.3实现通用爬虫</h5>
+<ul>
+<li>目标：实现一个可以通过指定不同URL列表，分组的XPATH和详情的XPATH,从不同页面上提取代理的Ip、端口号和区域的通用爬虫；</li>
+<li>步骤：<ol>
+<li>在base_spider.py 文件中，定义一个BaseSpider类，继承object</li>
+<li>提供三个类成员变量：<ol>
+<li>urls:代理IP网址的URL列表</li>
+<li>group_xpath：分组XPATH，获取包含代理IP信息标签列表的XPATH</li>
+<li>detail_xpath：组内XPATH,获取代理IP详情的信息XPATH，格式为: {'ip':'xx', 'port':'xx', 'area':'xx'}</li>
+</ol>
+</li>
+<li>提供初始方法，传入爬虫URL列表，分组XPATH，详情（组内）XPATRH</li>
+<li>对外提供一个获取代理IP的方法<ol>
+<li>遍历URL列表，获取URL</li>
+<li>根据发送请求，获取页面数据</li>
+<li>解析页面，提取数据，封装为Proxy对象</li>
+<li>返回Proxy对象列表</li>
+</ol>
+</li>
+</ol>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1">#base_spider.py</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">8.3实现通用爬虫</span>
+<span class="sd">目标：实现一个可以通过指定不同URL列表，分组的XPATH和详情的XPATH,从不同页面上提取代理的Ip、端口号和区域的通用爬虫；</span>
+<span class="sd">步骤：</span>
+<span class="sd">  1. 在base_spider.py 文件中，定义一个BaseSpider类，继承object</span>
+<span class="sd">  2. 提供三个类成员变量：</span>
+<span class="sd">     2.1. urls:代理IP网址的URL列表</span>
+<span class="sd">     2.2. group_xpath：分组XPATH，获取包含代理IP信息标签列表的XPATH</span>
+<span class="sd">     2.3. detail_xpath：组内XPATH,获取代理IP详情的信息XPATH，格式为: {&#39;ip&#39;:&#39;xx&#39;, &#39;port&#39;:&#39;xx&#39;, &#39;area&#39;:&#39;xx&#39;}</span>
+<span class="sd">  3. 提供初始方法，传入爬虫URL列表，分组XPATH，详情（组内）XPATRH</span>
+<span class="sd">  4. 对外提供一个获取代理IP的方法</span>
+<span class="sd">     4.1. 遍历URL列表，获取URL</span>
+<span class="sd">     4.2. 根据发送请求，获取页面数据</span>
+<span class="sd">     4.3. 解析页面，提取数据，封装为Proxy对象</span>
+<span class="sd">     4.4. 返回Proxy对象列表</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1">#1. 在base_spider.py 文件中，定义一个BaseSpider类，继承object</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">utils.http</span> <span class="kn">import</span> <span class="n">get_request_headers</span>
+<span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">etree</span>
+<span class="kn">from</span> <span class="nn">domain</span> <span class="kn">import</span> <span class="n">Proxy</span>
+
+
+<span class="k">class</span> <span class="nc">BaseSpider</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="c1">#2. 提供三个类成员变量：</span>
+    <span class="c1">#2.1. urls:代理IP网址的URL列表</span>
+    <span class="n">urls</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1">#2.2. group_xpath：分组XPATH，获取包含代理IP信息标签列表的XPATH</span>
+    <span class="n">group_xpath</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="c1">#2.3. detail_xpath：组内XPATH,获取代理IP详情的信息XPATH，格式为: {&#39;ip&#39;:&#39;xx&#39;, &#39;port&#39;:&#39;xx&#39;, &#39;area&#39;:&#39;xx&#39;}</span>
+    <span class="n">detail_xpath</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1">#3. 提供初始方法，传入爬虫URL列表，分组XPATH，详情（组内）XPATRH</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">urls</span><span class="o">=</span><span class="p">[],</span> <span class="n">group_xpath</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">detail_xpath</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="k">if</span> <span class="n">urls</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">urls</span> <span class="o">=</span> <span class="n">urls</span>
+        <span class="k">if</span> <span class="n">group_xpath</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">group_xpath</span> <span class="o">=</span> <span class="n">group_xpath</span>
+        <span class="k">if</span> <span class="n">detail_xpath</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">detail_xpath</span> <span class="o">=</span> <span class="n">detail_xpath</span>
+
+    <span class="k">def</span> <span class="nf">get_page_from_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;根据url发送请求，获取页面数据&quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">get_request_headers</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">content</span>
+
+    <span class="k">def</span> <span class="nf">get_first_from_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lis</span><span class="p">):</span>
+        <span class="c1">#如果列表中有元素就返回第一个，否则返回空串</span>
+        <span class="k">return</span> <span class="n">lis</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lis</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">get_proxies_from_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;解析页面，提取数据，封装为Proxy对象&quot;&quot;&quot;</span>
+        <span class="n">element</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">HTML</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+        <span class="c1">#获取包含代理IP信息的标签列表</span>
+        <span class="n">trs</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_xpath</span><span class="p">)</span>
+        <span class="c1">#遍历trs，获取代理IP相关信息</span>
+        <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">trs</span><span class="p">:</span>
+            <span class="c1"># ip = tr.xpath(self.detail_xpath[&#39;ip&#39;])[0]</span>
+            <span class="c1"># port = tr.xpath(self.detail_xpath[&#39;port&#39;])[0]</span>
+            <span class="c1"># area = tr.xpath(self.detail_xpath[&#39;area&#39;])[0]</span>
+            <span class="n">ip</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_first_from_list</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detail_xpath</span><span class="p">[</span><span class="s1">&#39;ip&#39;</span><span class="p">]))</span>
+            <span class="n">port</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_first_from_list</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detail_xpath</span><span class="p">[</span><span class="s1">&#39;port&#39;</span><span class="p">]))</span>
+            <span class="n">area</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_first_from_list</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detail_xpath</span><span class="p">[</span><span class="s1">&#39;area&#39;</span><span class="p">]))</span>
+            <span class="n">proxy</span> <span class="o">=</span> <span class="n">Proxy</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">area</span><span class="o">=</span><span class="n">area</span><span class="p">)</span>
+            <span class="c1">#使用yield返回提取到的数据</span>
+            <span class="k">yield</span> <span class="n">proxy</span>
+
+    <span class="k">def</span> <span class="nf">get_proxies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># 4.对外提供一个获取代理IP的方法</span>
+        <span class="c1"># 4.1.遍历URL列表，获取URL</span>
+        <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">urls</span><span class="p">:</span>
+            <span class="c1"># 4.2.根据发送请求，获取页面数据</span>
+            <span class="n">page</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_page_from_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+            <span class="c1"># 4.3.解析页面，提取数据，封装为Proxy对象</span>
+            <span class="n">proxies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_proxies_from_page</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+            <span class="c1"># 4.4.返回Proxy对象列表</span>
+            <span class="k">yield from</span> <span class="n">proxies</span>
+
+<span class="c1"># 测试</span>
+<span class="c1"># if __name__ == &#39;__main__&#39;:</span>
+<span class="c1">#     config = {</span>
+<span class="c1">#         &#39;urls&#39;: [&#39;http://www.ip3366.net/free/?stype=1&amp;page={}&#39;.format(i) for i in range(1,4)],</span>
+<span class="c1">#         &#39;group_xpath&#39;: &#39;//*[@id=&quot;list&quot;]/table/tbody/tr&#39;,</span>
+<span class="c1">#         &#39;detail_xpath&#39;:{</span>
+<span class="c1">#             &#39;ip&#39;: &#39;./td[1]/text()&#39;,</span>
+<span class="c1">#             &#39;port&#39;: &#39;./td[2]/text()&#39;,</span>
+<span class="c1">#             &#39;area&#39; : &#39;./td[5]/text()&#39;</span>
+<span class="c1">#         }</span>
+<span class="c1">#     }</span>
+<span class="c1">#     spider = BaseSpider(**config)</span>
+<span class="c1">#     for proxy in spider.get_proxies():</span>
+<span class="c1">#         print(proxy)</span>
+</pre></div>
 
             </div>
         </article>
