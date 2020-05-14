@@ -540,9 +540,7 @@ TEST_TIMEOUT = 10
 #### 7.实现代理池的数据库模块
 
 - 作用：用于对proxies集合进行数据库的相关 操作
-
 - 目标：实现对数据库增删改查相关操作
-
 - 步骤：
   - 在`__init__`中，建立数据连接，获取要操作的集合，在`__del__`方法中关闭数据库连接
   
@@ -551,8 +549,12 @@ TEST_TIMEOUT = 10
     - 实现修改功能
     - 实现删除代理：根据代理的IP删除代理
     - 查询所有代理IP的功能
-    
-  - 代码
+- 提供代理API模块使用的功能
+  - 实现查询功能：根据条件进行查询 ，可以指定查询数量，先分数降序，速度升序，保证优质的代理IP在上面
+  - 实现根据协议类型和要访问网站的域名，获取代理IP列表
+  - 实现根据协议类型和要访问完整的域名，随机获取一个代理IP
+  - 实现把指定域名添加到指定IP的disable_domain列表中
+- 代码：
 
 ```python
 # -*- coding:utf-8 -*-
@@ -735,10 +737,139 @@ MONGO_URL = 'mongodb://127.0.0.1:27017'
 
 
 
+#### 8.实现代理池的爬虫模块
+
+##### 8.1爬虫模块的需求
+
+- 需求：抓取各个代理IP网站上的免费代理IP,进行检测，如果可用，存储到数据库中
+- 需要抓取代理IP的页面如下：
+  - [西刺代理](https://www.xicidaili.com/nn/1)：https://www.xicidaili.com/nn/1
+  - [ip3366代理](http://www.ip3366.net/free/?stype=1&page=1)： http://www.ip3366.net/free/?stype=1&page=1 
+  - [快代理](https://www.kuaidaili.com/free/inha/1/)： https://www.kuaidaili.com/free/inha/1/ 
+  - [proxylistplus代理](https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1)： https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1 
+
+##### 8.2 爬虫模块的设计思路
+
+- 通用爬虫：通过指定URL列表，分组XPATH和组内XPATH,来提取不同网站的代理IP
+  - 原因：代理IP网站的结构几乎是Table，页面结构类似
+- 具体爬虫：用于抓取集体代理IP网站
+  - 通过继承通用爬虫实现网站的抓取吗，一般只需要指定爬虫的URL列表，分组的XPATH，组内的XPATH就可以了。
+  - 如果该网站有特殊反爬手段，可以通过重写某些方法实现反爬
+- 爬虫运行模块：启动爬虫，抓取代理IP，如果可用，就存储到数据库中；
+  -  通过配置文件来控制启动哪些爬虫，增加扩展性；如果将来我们遇到返回json格式的代理，单独写一个爬虫配置就好了。
+
+##### 8.3实现通用爬虫
+
+- 目标：实现一个可以通过指定不同URL列表，分组的XPATH和详情的XPATH,从不同页面上提取代理的Ip、端口号和区域的通用爬虫；
+- 步骤：
+  1. 在base_spider.py 文件中，定义一个BaseSpider类，继承object
+  2. 提供三个类成员变量：
+     1. urls:代理IP网址的URL列表
+     2. group_xpath：分组XPATH，获取包含代理IP信息标签列表的XPATH
+     3. detail_xpath：组内XPATH,获取代理IP详情的信息XPATH，格式为: {'ip':'xx', 'port':'xx', 'area':'xx'}
+  3. 提供初始方法，传入爬虫URL列表，分组XPATH，详情（组内）XPATRH
+  4. 对外提供一个获取代理IP的方法
+     1. 遍历URL列表，获取URL
+     2. 根据发送请求，获取页面数据
+     3. 解析页面，提取数据，封装为Proxy对象
+     4. 返回Proxy对象列表
+
+```python
+#base_spider.py
+"""
+8.3实现通用爬虫
+目标：实现一个可以通过指定不同URL列表，分组的XPATH和详情的XPATH,从不同页面上提取代理的Ip、端口号和区域的通用爬虫；
+步骤：
+  1. 在base_spider.py 文件中，定义一个BaseSpider类，继承object
+  2. 提供三个类成员变量：
+     2.1. urls:代理IP网址的URL列表
+     2.2. group_xpath：分组XPATH，获取包含代理IP信息标签列表的XPATH
+     2.3. detail_xpath：组内XPATH,获取代理IP详情的信息XPATH，格式为: {'ip':'xx', 'port':'xx', 'area':'xx'}
+  3. 提供初始方法，传入爬虫URL列表，分组XPATH，详情（组内）XPATRH
+  4. 对外提供一个获取代理IP的方法
+     4.1. 遍历URL列表，获取URL
+     4.2. 根据发送请求，获取页面数据
+     4.3. 解析页面，提取数据，封装为Proxy对象
+     4.4. 返回Proxy对象列表
+
+"""
+#1. 在base_spider.py 文件中，定义一个BaseSpider类，继承object
+import requests
+from utils.http import get_request_headers
+from lxml import etree
+from domain import Proxy
 
 
-- 提供代理API模块使用的功能
-  - 实现查询功能：根据条件进行查询 ，可以指定查询数量，先分数降序，速度升序，保证优质的代理IP在上面
-  - 实现根据协议类型和要访问网站的域名，获取代理IP列表
-  - 实现根据协议类型和要访问完整的域名，随机获取一个代理IP
-  - 实现把指定域名添加到指定IP的disable_domain列表中
+class BaseSpider(object):
+    #2. 提供三个类成员变量：
+    #2.1. urls:代理IP网址的URL列表
+    urls = []
+    #2.2. group_xpath：分组XPATH，获取包含代理IP信息标签列表的XPATH
+    group_xpath = ''
+    #2.3. detail_xpath：组内XPATH,获取代理IP详情的信息XPATH，格式为: {'ip':'xx', 'port':'xx', 'area':'xx'}
+    detail_xpath = {}
+
+    #3. 提供初始方法，传入爬虫URL列表，分组XPATH，详情（组内）XPATRH
+    def __init__(self, urls=[], group_xpath='', detail_xpath={}):
+        if urls:
+            self.urls = urls
+        if group_xpath:
+            self.group_xpath = group_xpath
+        if detail_xpath:
+            self.detail_xpath = detail_xpath
+
+    def get_page_from_url(self, url):
+        """根据url发送请求，获取页面数据"""
+        response = requests.get(url, headers=get_request_headers())
+        return response.content
+
+    def get_first_from_list(self, lis):
+        #如果列表中有元素就返回第一个，否则返回空串
+        return lis[0] if len(lis) != 0 else ''
+
+    def get_proxies_from_page(self, page):
+        """解析页面，提取数据，封装为Proxy对象"""
+        element = etree.HTML(page)
+        #获取包含代理IP信息的标签列表
+        trs = element.xpath(self.group_xpath)
+        #遍历trs，获取代理IP相关信息
+        for tr in trs:
+            # ip = tr.xpath(self.detail_xpath['ip'])[0]
+            # port = tr.xpath(self.detail_xpath['port'])[0]
+            # area = tr.xpath(self.detail_xpath['area'])[0]
+            ip = self.get_first_from_list(tr.xpath(self.detail_xpath['ip']))
+            port = self.get_first_from_list(tr.xpath(self.detail_xpath['port']))
+            area = self.get_first_from_list(tr.xpath(self.detail_xpath['area']))
+            proxy = Proxy(ip, port, area=area)
+            #使用yield返回提取到的数据
+            yield proxy
+
+    def get_proxies(self):
+        # 4.对外提供一个获取代理IP的方法
+        # 4.1.遍历URL列表，获取URL
+        for url in self.urls:
+            # 4.2.根据发送请求，获取页面数据
+            page = self.get_page_from_url(url)
+            # 4.3.解析页面，提取数据，封装为Proxy对象
+            proxies = self.get_proxies_from_page(page)
+            # 4.4.返回Proxy对象列表
+            yield from proxies
+
+# 测试
+# if __name__ == '__main__':
+#     config = {
+#         'urls': ['http://www.ip3366.net/free/?stype=1&page={}'.format(i) for i in range(1,4)],
+#         'group_xpath': '//*[@id="list"]/table/tbody/tr',
+#         'detail_xpath':{
+#             'ip': './td[1]/text()',
+#             'port': './td[2]/text()',
+#             'area' : './td[5]/text()'
+#         }
+#     }
+#     spider = BaseSpider(**config)
+#     for proxy in spider.get_proxies():
+#         print(proxy)
+
+
+```
+
