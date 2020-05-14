@@ -19,7 +19,7 @@
     <script>
         var ExSearchConfig = {
             root: "",
-            api: "https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/cd45503d9df3254315c1442a95a33c51.json"
+            api: "https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/7343a8ef4c556525accd981d0d807c35.json"
         }
     </script>
     
@@ -644,15 +644,43 @@ TEST_TIMEOUT = 10</code></pre>
 </ul>
 </li>
 <li><p>代码</p>
-<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pymongo</span> <span class="kn">import</span> <span class="n">MongoClient</span>  <span class="c1">#http://www.imooc.com/article/43478</span>
+</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1"># -*- coding:utf-8 -*-</span>
+<span class="c1">#mongo_pool.py</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">7.实现代理池的数据库模块</span>
+<span class="sd">作用：用于对proxies集合进行数据库的相关操作</span>
+<span class="sd">目标：实现对数据库增删改查相关操作</span>
+<span class="sd">步骤：</span>
+<span class="sd">   1.在init中，建立数据连接，获取要操作的集合，在del方法中关闭数据库连接</span>
+<span class="sd">   2.提供基础的增删改查功能</span>
+<span class="sd">        2.1实现插入功能</span>
+<span class="sd">        2.2实现修改功能</span>
+<span class="sd">        2.3实现删除代理：根据代理的IP删除代理</span>
+<span class="sd">        2.4查询所有代理IP的功能</span>
+<span class="sd">   3.提供代理API模块使用的功能</span>
+<span class="sd">        3.1实现查询功能：根据条件进行查询 ，可以指定查询数量，先分数降序，速度升序，保证优质的代理IP在上面</span>
+<span class="sd">        3.2实现根据协议类型和要访问网站的域名，获取代理IP列表</span>
+<span class="sd">        3.3实现根据协议类型和要访问完整的域名，随机获取一个代理IP</span>
+<span class="sd">        3.4实现把指定域名添加到指定IP的disable_domain列表中</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="kn">from</span> <span class="nn">pymongo</span> <span class="kn">import</span> <span class="n">MongoClient</span>  <span class="c1">#http://www.imooc.com/article/43478  使用方法</span>
 <span class="kn">from</span> <span class="nn">settings</span> <span class="kn">import</span> <span class="n">MONGO_URL</span>  <span class="c1">#https://juejin.im/post/5d525b1af265da03b31bc2d5</span>
 <span class="kn">from</span> <span class="nn">utils.log</span> <span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">from</span> <span class="nn">domain</span> <span class="kn">import</span> <span class="n">Proxy</span>
+<span class="kn">import</span> <span class="nn">pymongo</span>
+
 
 <span class="k">class</span> <span class="nc">MongoPool</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1">#在 int中，建立数据连接，获取要操作的集合</span>
+        <span class="c1">#1.在 int中，建立数据连接，获取要操作的集合</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span><span class="n">MONGO_URL</span><span class="p">)</span>
         <span class="c1">#获取要操作的集合</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proxies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">[</span><span class="s1">&#39;proxies_pool&#39;</span><span class="p">][</span><span class="s1">&#39;proxies&#39;</span><span class="p">]</span>
@@ -662,7 +690,7 @@ TEST_TIMEOUT = 10</code></pre>
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">inser_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proxy</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;实现插入功能&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;2.1实现插入功能&quot;&quot;&quot;</span>
 
         <span class="n">count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxies</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span><span class="n">proxy</span><span class="o">.</span><span class="n">ip</span><span class="p">})</span>
         <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -675,17 +703,17 @@ TEST_TIMEOUT = 10</code></pre>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;已存在的代理：</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">proxy</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">update_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proxy</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;实现修改功能&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;2.2实现修改功能&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proxies</span><span class="o">.</span><span class="n">update_one</span><span class="p">({</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="n">proxy</span><span class="o">.</span><span class="n">ip</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;$set&#39;</span><span class="p">:</span> <span class="n">proxy</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">})</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;代理更新：</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">proxy</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">delete_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proxy</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;实现删除代理，根据代理的IP删除代理&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;2.3实现删除代理，根据代理的IP删除代理&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proxies</span><span class="o">.</span><span class="n">delete_one</span><span class="p">({</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span><span class="n">proxy</span><span class="o">.</span><span class="n">ip</span><span class="p">})</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;删除代理IP:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">proxy</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">find_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;查询所有代理IP的功能&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;2.4查询所有代理IP的功能&quot;&quot;&quot;</span>
         <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxies</span><span class="o">.</span><span class="n">find</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="c1">#删除_id这个key</span>
@@ -693,22 +721,105 @@ TEST_TIMEOUT = 10</code></pre>
             <span class="n">proxy</span> <span class="o">=</span> <span class="n">Proxy</span><span class="p">(</span><span class="o">**</span><span class="n">item</span><span class="p">)</span>
             <span class="k">yield</span> <span class="n">proxy</span>
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>   <span class="c1">#测试是否可用</span>
+    <span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">{},</span> <span class="n">count</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        3.1实现查询功能：根据条件进行查询 ，可以指定查询数量，先分数降序，速度升序，保证优质的代理IP在上面</span>
+<span class="sd">        :param conditions:查询条件字典</span>
+<span class="sd">        :param count:限制最多取出多少个代理IP</span>
+<span class="sd">        :return:返回满足要求的代理IP（Proxy）列表</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxies</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">count</span><span class="p">)</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span>
+            <span class="p">[(</span><span class="s1">&#39;score&#39;</span><span class="p">,</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">DESCENDING</span><span class="p">),(</span><span class="s1">&#39;speed&#39;</span><span class="p">,</span> <span class="n">pymongo</span><span class="o">.</span><span class="n">ASCENDING</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+        <span class="c1">#准备列表，用于存储查询处理代理IP</span>
+        <span class="n">proxy_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1">#遍历 cursor</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;_id&#39;</span><span class="p">)</span>
+            <span class="n">proxy</span> <span class="o">=</span> <span class="n">Proxy</span><span class="p">(</span><span class="o">**</span><span class="n">item</span><span class="p">)</span>
+            <span class="n">proxy_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">proxy_list</span>
+
+    <span class="c1">#返回满足要求代理IP(Proxy对象）列表</span>
+    <span class="k">def</span> <span class="nf">get_proxies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">nick_type</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        3.2 实现根据协议类型和要访问网页的域名，获取代理IP列表</span>
+<span class="sd">        :param protocol:协议：http,https</span>
+<span class="sd">        :param domain:域名：jd.com</span>
+<span class="sd">        :param count:用于限制获取多少个代理IP,默认是获取所有的</span>
+<span class="sd">        :param nick_type:匿名类型，默认，获取高匿的代理IP</span>
+<span class="sd">        :return:满足要求的代理IP列表</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1">#定义查询条件</span>
+        <span class="n">conditions</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;nick_type&#39;</span><span class="p">:</span> <span class="n">nick_type</span><span class="p">}</span>
+        <span class="c1">#根据协议，指定查询条件</span>
+        <span class="k">if</span> <span class="n">protocol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1">#如果没有传入协议类型，返回支持http和https的代理IP</span>
+            <span class="n">conditions</span><span class="p">[</span><span class="s1">&#39;protocol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">elif</span> <span class="n">protocol</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;http&#39;</span><span class="p">:</span>
+            <span class="n">conditions</span><span class="p">[</span><span class="s1">&#39;protocol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;$in&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">conditions</span><span class="p">[</span><span class="s1">&#39;protocol&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;$in&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]}</span>
+
+        <span class="k">if</span> <span class="n">domain</span><span class="p">:</span>
+            <span class="n">conditions</span><span class="p">[</span><span class="s1">&#39;disable_domains&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;$nin&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">domain</span><span class="p">]}</span>
+        <span class="c1">#满足要求的代理IP列表</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">count</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">random_proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">nick_type</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        #3.3实现根据协议类型和要访问完整的域名，随机获取一个代理IP</span>
+<span class="sd">        :param protocol:协议：http,https</span>
+<span class="sd">        :param domain:域名：jd.com</span>
+<span class="sd">        :param count:用于限制获取多少个代理IP,默认是获取所有的</span>
+<span class="sd">        :param nick_type:匿名类型，默认，获取高匿的代理IP</span>
+<span class="sd">        :return:返回满足要求的的一个代理IP(Proxy对象）</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">proxy_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_proxies</span><span class="p">(</span><span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">count</span><span class="p">,</span> <span class="n">nick_type</span><span class="o">=</span><span class="n">nick_type</span><span class="p">)</span>
+        <span class="c1">#从Proxy_list列表中，随机选出一个代理IP返回</span>
+        <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">proxy_list</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">disable_domain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="p">,</span> <span class="n">domain</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        #3.4实现把指定域名添加到指定IP的disable_domain列表中</span>
+<span class="sd">        :param ip: IP地址</span>
+<span class="sd">        :param domain: 域名</span>
+<span class="sd">        :return: 如果返回True,就表示添加成功，返回False，表示添加失败</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxies</span><span class="o">.</span><span class="n">count_documents</span><span class="p">({</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span><span class="n">ip</span><span class="p">,</span> <span class="s1">&#39;disable_domains&#39;</span><span class="p">:</span><span class="n">domain</span><span class="p">})</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1">#如果disable_domains字段中，没有这个域名才添加</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">proxies</span><span class="o">.</span><span class="n">update_one</span><span class="p">({</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span><span class="n">ip</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;$push&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;disable_domains&#39;</span><span class="p">:</span><span class="n">domain</span><span class="p">}})</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+<span class="c1">#测试是否可用</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">mongo</span> <span class="o">=</span> <span class="n">MongoPool</span><span class="p">()</span>
-    <span class="n">proxy</span> <span class="o">=</span> <span class="n">Proxy</span><span class="p">(</span><span class="s1">&#39;202.104.113.36&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="s1">&#39;53281&#39;</span><span class="p">)</span>
-    <span class="n">mongo</span><span class="o">.</span><span class="n">inser_one</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
-    <span class="n">mongo</span><span class="o">.</span><span class="n">update_one</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
-    <span class="n">mongo</span><span class="o">.</span><span class="n">delete_one</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">proxy</span> <span class="ow">in</span> <span class="n">mongo</span><span class="o">.</span><span class="n">find_all</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
+
+    <span class="c1">#proxy = Proxy(&#39;202.104.113.36&#39;, port=&#39;53281&#39;)</span>
+    <span class="c1">#mongo.inser_one(proxy)</span>
+    <span class="c1"># mongo.update_one(proxy)</span>
+    <span class="c1">#mongo.delete_one(proxy)</span>
+    <span class="c1">#for proxy in mongo.find_all():</span>
+     <span class="c1">#   print(proxy)</span>
+
+    <span class="c1">#dic = {&#39;ip&#39;: &#39;202.104.113.46&#39;, &#39;port&#39;: &#39;53281&#39;, &#39;protocol&#39;: 2, &#39;nick_type&#39;: 1, &#39;speed&#39;: 3, &#39;area&#39;: None, &#39;score&#39;: 40,&#39;disable_domain&#39;: [&#39;taobao.com&#39;]}</span>
+    <span class="c1">#proxy = Proxy(**dic)</span>
+    <span class="c1">#mongo.inser_one(proxy)</span>
+
+    <span class="c1">#for proxy in mongo.find({&#39;protocol&#39;:0}, count=1):</span>
+    <span class="c1">#    print(proxy)</span>
+    <span class="c1">#for proxy in mongo.get_proxies(domain=&#39;taobao.com&#39;, nick_type=1):</span>
+    <span class="c1">#    print(proxy)</span>
+    <span class="c1">#mongo.disable_domain(&#39;202.104.113.46&#39;, &#39;ali.com&#39;)</span>
 </pre></div>
-</li>
-</ul>
-</li>
-</ul>
 <div class="highlight"><pre><span></span><span class="c1">#settings.py</span>
-  <span class="c1">#MongoDB数据库的URL</span>
-  <span class="n">MONGO_URL</span> <span class="o">=</span> <span class="s1">&#39;mongodb://127.0.0.1:27017&#39;</span>
+<span class="c1">#MongoDB数据库的URL</span>
+<span class="n">MONGO_URL</span> <span class="o">=</span> <span class="s1">&#39;mongodb://127.0.0.1:27017&#39;</span>
 </pre></div>
 <ul>
 <li>提供代理API模块使用的功能<ul>
