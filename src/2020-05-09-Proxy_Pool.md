@@ -555,10 +555,10 @@ TEST_TIMEOUT = 10
   - 代码
   
     ```python
-    #mongo_pool.py
-    
-    from pymongo import MongoClient  #http://www.imooc.com/article/43478
-    from settings import MONGO_URL  #https://juejin.im/post/5d525b1af265da03b31bc2d5
+    from pymongo import MongoClient  
+    #http://www.imooc.com/article/43478
+    from settings import MONGO_URL  
+    #https://juejin.im/post/5d525b1af265da03b31bc2d5
     from utils.log import logger
     from domain import Proxy
     
