@@ -873,3 +873,129 @@ class BaseSpider(object):
 
 ```
 
+##### 8.4 实现具体的爬虫类
+
+- 目标：通过继承通用爬虫，实现多个具体爬虫，分别从各个免费代理IP网站上抓取代理IP
+
+- 目标：
+
+  1. 实现 [西刺代理](https://www.xicidaili.com/nn/1) 爬虫： https://www.xicidaili.com/nn/1
+     - 定义一个类，继承通用爬虫类（BasicSpider）
+     - 提供urls, group_xpath和detail_xpath
+  2. 实现 [ip3366代理](http://www.ip3366.net/free/?stype=1&page=1) 爬虫：http://www.ip3366.net/free/?stype=1&page=1 
+     - 定义一个类，继承通用爬虫类（BasicSpider）
+     - 提供urls, group_xpath和detail_xpath
+  3. 实现[快代理](https://www.kuaidaili.com/free/inha/1/) 爬虫： https://www.kuaidaili.com/free/inha/1/ 
+     - 定义一个类，继承通用爬虫类（BasicSpider）
+     - 提供urls, group_xpath和detail_xpath
+  4. 实现[proxylistplus代理](https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1) 爬虫： https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1 
+     - 定义一个类，继承通用爬虫类（BasicSpider）
+     - 提供urls, group_xpath和detail_xpath
+  5. 实现 [66ip](http://www/66ip.cn/1.html) 爬虫： http://www/66ip.cn/1.html
+     - 定义一个类，继承通用爬虫类（BasicSpider）
+     - 提供urls, group_xpath和detail_xpath
+     - 由于66ip网页进行js +cookie 反爬，需要重写父类的get_page_from_url方法
+
+  ```python
+  #proxy_spider.py
+  
+  """
+  1. 实现 [西刺代理] 爬虫： https://www.xicidaili.com/nn/1
+     定义一个类，继承通用爬虫类（BasicSpider）
+     提供urls, group_xpath和detail_xpath
+  """
+  
+  from core.proxy_spider.base_spider import BaseSpider
+  import time
+  import random
+  
+  class XiciSpider(BaseSpider):
+  
+      #准备URL 列表
+      urls = ['https://www.xicidaili.com/nn/{}'.format(i) for i in range(1, 11)]
+      #分组的XPATH，用于获取包含代理IP信息的标签列表
+      group_xpath = '//*[@id="ip_list"]/tr[position()>1]'
+      #组内的XPATH,用于提取 ip,port,area
+      detail_xpath = {
+          'ip': './td[2]/text()',
+          'port': './td[3]/text()',
+          'area': './td[4]/a/text()'
+      }
+  
+  """
+  实现 [ip3366代理] 爬虫：http://www.ip3366.net/free/?stype=1&page=1 
+  
+  - 定义一个类，继承通用爬虫类（BasicSpider）
+  - 提供urls, group_xpath和detail_xpath
+  """
+  
+  class Ip3366Spider(BaseSpider):
+  
+      #准备URL 列表
+      urls = ['http://www.ip3366.net/free/?stype={}&page={}'.format(i, j) for i in range(1, 5) for j in range(1, 8)]
+      #分组的XPATH，用于获取包含代理IP信息的标签列表
+      group_xpath = '//*[@id="list"]/table/tbody/tr'
+      #组内的XPATH,用于提取 ip,port,area
+      detail_xpath = {
+          'ip': './td[1]/text()',
+          'port': './td[2]/text()',
+          'area': './td[5]/text()'
+      }
+  
+  """
+  3.实现[快代理] 爬虫： https://www.kuaidaili.com/free/inha/1/ 
+  
+  - 定义一个类，继承通用爬虫类（BasicSpider）
+  - 提供urls, group_xpath和detail_xpath
+  """
+  
+  class KuaiSpider(BaseSpider):
+  
+      #准备URL 列表
+      urls = ['https://www.kuaidaili.com/free/inha/{}/'.format(i) for i in range(1, 6)]
+      #分组的XPATH，用于获取包含代理IP信息的标签列表
+      group_xpath = '//*[@id="list"]/table/tbody/tr'
+      #组内的XPATH,用于提取 ip,port,area
+      detail_xpath = {
+          'ip': './td[1]/text()',
+          'port': './td[2]/text()',
+          'area': './td[5]/text()'
+      }
+  
+      #当我们两个页面访问时间间隔太短，就会报错，这是一种反爬手段
+      def get_page_from_url(self, url):
+          #随机等待1-3秒
+          time.sleep(random.uniform(1, 3))
+          #调用父类的方法，发送请求，获取响应数据
+          return super().get_page_from_url(url)
+  
+  """
+  4.实现[proxylistplus代理] 爬虫： https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-1 
+  
+  - 定义一个类，继承通用爬虫类（BasicSpider）
+  - 提供urls, group_xpath和detail_xpath
+  """
+  
+  class ProxylistplusSpider(BaseSpider):
+      #国外网站会比较慢
+      #准备URL 列表
+      urls = ['https://list.proxylistplus.com/Fresh-HTTP-Proxy-List-{}'.format(i) for i in range(1, 7)]
+      #分组的XPATH，用于获取包含代理IP信息的标签列表
+      group_xpath = '//*[@id="page"]/table[2]/tr[position()>2]'
+      #组内的XPATH,用于提取 ip,port,area
+      detail_xpath = {
+          'ip': './td[2]/text()',
+          'port': './td[3]/text()',
+          'area': './td[5]/text()'
+      }
+      
+  #测试
+  # if __name__ == '__main__':
+  #     spider = XiciSpider()
+  #     for proxy in spider.get_proxies():
+  #         print(proxy)
+  
+      #print(Ip3366Spider().urls)
+  ```
+
+  
