@@ -74,6 +74,16 @@ social_links = [
     }
 ]
 
+valine = {
+    "enable": True,
+    "el": '#vcomments',
+    "appId": "3q2N2bl6O7mcynxWMT9ALXHP-gzGzoHsz",
+    "appKey": "y3wuu6FerG8j7BCh5X9wA4X7",
+    "visitor": True,
+    "recordIP": True,
+    "placeholder": "交流交流？"
+}
+
 head_addon = r'''
 <meta http-equiv="x-dns-prefetch-control" content="on">
 <link rel="dns-prefetch" href="//cdn.jsdelivr.net" />
