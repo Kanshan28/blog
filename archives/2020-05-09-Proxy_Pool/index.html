@@ -19,7 +19,7 @@
     <script>
         var ExSearchConfig = {
             root: "",
-            api: "https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/b58125c48abdda7c458d11a65616d568.json"
+            api: "https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/1691fad09c3ae2ede9f1a74349b4faa6.json"
         }
     </script>
     
@@ -952,6 +952,7 @@ TEST_TIMEOUT = 10</code></pre>
         <span class="c1"># 4.对外提供一个获取代理IP的方法</span>
         <span class="c1"># 4.1.遍历URL列表，获取URL</span>
         <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">urls</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;获取URl</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">url</span><span class="p">))</span>
             <span class="c1"># 4.2.根据发送请求，获取页面数据</span>
             <span class="n">page</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_page_from_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
             <span class="c1"># 4.3.解析页面，提取数据，封装为Proxy对象</span>
@@ -1144,6 +1145,20 @@ TEST_TIMEOUT = 10</code></pre>
 </li>
 </ul>
 <div class="highlight"><pre><span></span><span class="c1">#run_spider.py</span>
+<span class="c1">#如果要用协程就要打猴子补丁</span>
+<span class="kn">from</span> <span class="nn">gevent</span> <span class="kn">import</span> <span class="n">monkey</span>
+<span class="n">monkey</span><span class="o">.</span><span class="n">patch_all</span><span class="p">()</span>
+<span class="c1">#导入协程池</span>
+<span class="kn">from</span> <span class="nn">gevent.pool</span> <span class="kn">import</span> <span class="n">Pool</span>
+<span class="kn">import</span> <span class="nn">schedule</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">settings</span> <span class="kn">import</span> <span class="n">RUN_SPIDERS_INTERVAL</span>
+
+<span class="kn">from</span> <span class="nn">settings</span> <span class="kn">import</span> <span class="n">PROXIES_SPIDERS</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+<span class="kn">from</span> <span class="nn">core.proxy_validate.httpbin_validator</span> <span class="kn">import</span> <span class="n">check_proxy</span>
+<span class="kn">from</span> <span class="nn">core.db.mongo_pool</span> <span class="kn">import</span> <span class="n">MongoPool</span>
+<span class="kn">from</span> <span class="nn">utils.log</span> <span class="kn">import</span> <span class="n">logger</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">8.5 实现运行爬虫模块</span>
@@ -1157,18 +1172,25 @@ TEST_TIMEOUT = 10</code></pre>
 <span class="sd">    2.3检测代理IP——代理IP检测模块</span>
 <span class="sd">    2.4如果可以用，写入数据库——数据库模块</span>
 <span class="sd">    2.5处理异常，防止一个爬虫内部出错了，影响其他的爬虫</span>
+<span class="sd">3.使用异步俩执行每一个爬虫任务，以提高抓取代理IP效率</span>
+<span class="sd">    3.1在`__ini__`方法中创建协程池对象</span>
+<span class="sd">    3.2把处理一个代理爬虫的代码抽到一个方法</span>
+<span class="sd">    3.3使用异步执行这个方法</span>
+<span class="sd">    3.4调用协程的json方法，让当前线程等待队列任务的完成</span>
+<span class="sd">4.使用schedule模块，实现每隔一定的时间，执行一次爬取任务</span>
+<span class="sd">    4.1定义一个start的类方法</span>
+<span class="sd">    4.2创建当前类的对象，调用run方法</span>
+<span class="sd">    4.3使用schedule模块，每隔一定的时间，执行当前对象的run方法</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">settings</span> <span class="kn">import</span> <span class="n">PROXIES_SPIDERS</span>
-<span class="kn">import</span> <span class="nn">importlib</span>
-<span class="kn">from</span> <span class="nn">core.proxy_validate.httpbin_validator</span> <span class="kn">import</span> <span class="n">check_proxy</span>
-<span class="kn">from</span> <span class="nn">core.db.mongo_pool</span> <span class="kn">import</span> <span class="n">MongoPool</span>
-<span class="kn">from</span> <span class="nn">utils.log</span> <span class="kn">import</span> <span class="n">logger</span>
+
 
 <span class="k">class</span> <span class="nc">RunSpider</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1">#创建MongoPool对象</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mongo_pool</span> <span class="o">=</span> <span class="n">MongoPool</span><span class="p">()</span>
+        <span class="c1"># 3.1在`__ini__`方法中创建协程池对象</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coroutine_pool</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">get_spider_from_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;根据配置文件信息，获取爬虫对象列表&quot;&quot;&quot;</span>
@@ -1182,35 +1204,67 @@ TEST_TIMEOUT = 10</code></pre>
             <span class="c1">#根据类名，从模块中获取类</span>
             <span class="bp">cls</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">class_name</span><span class="p">)</span>
             <span class="c1">#创建爬虫对象</span>
-            <span class="n">spider</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
-            <span class="c1"># print(spider)</span>
-            <span class="k">yield</span> <span class="n">spider</span>
+            <span class="n">spiders</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+            <span class="c1">#print(spider)</span>
+            <span class="k">yield</span> <span class="n">spiders</span>
 
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1">#2.1根据配置文件信息，获取爬虫对象列表</span>
         <span class="n">spiders</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_spider_from_settings</span><span class="p">()</span>
         <span class="c1">#2.2遍历爬虫对象列表，获取爬虫对象，遍历爬虫对象的get_proxies方法，获取代理Ip</span>
         <span class="c1">#2.5处理异常，防止一个爬虫内部出错了，影响其他的爬虫</span>
+        <span class="c1">#self.__execute_one_spider_task(spiders)</span>
+        <span class="c1"># 3.3使用异步执行这个方法</span>
+        <span class="k">for</span> <span class="n">spider</span> <span class="ow">in</span> <span class="n">spiders</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coroutine_pool</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__execute_one_spider_task</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">spider</span><span class="p">,</span> <span class="p">))</span>
+
+        <span class="c1"># 3.4调用协程的json方法，让当前线程等待队列任务的完成</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coroutine_pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__execute_one_spider_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spider</span><span class="p">):</span>
+        <span class="c1"># 3.2把处理一个代理爬虫的代码抽到一个方法</span>
+        <span class="c1">#此方法是用来处理一个爬虫任务的</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">spider</span> <span class="ow">in</span> <span class="n">spiders</span><span class="p">:</span>
-                <span class="c1">#遍历爬虫对象的get_proxies()方法，获取代理IP</span>
-                <span class="k">for</span> <span class="n">proxy</span> <span class="ow">in</span> <span class="n">spider</span><span class="o">.</span><span class="n">get_proxies</span><span class="p">():</span>
-                    <span class="c1">#print(proxy)</span>
-                    <span class="c1">#2.3检测代理IP——代理IP检测模块</span>
-                    <span class="n">proxy</span> <span class="o">=</span> <span class="n">check_proxy</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
-                    <span class="c1">#print(proxy)</span>
-                    <span class="c1">#2.4如果可以用，写入数据库——数据库模块</span>
-                    <span class="c1">#如果speed不为-1，就说明可用</span>
-                    <span class="k">if</span> <span class="n">proxy</span><span class="o">.</span><span class="n">speed</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-                        <span class="c1">#写入数据库——数据库模块</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">mongo_pool</span><span class="o">.</span><span class="n">insert_one</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
+            <span class="c1"># 遍历爬虫对象的get_proxies()方法，获取代理IP</span>
+            <span class="k">for</span> <span class="n">proxy</span> <span class="ow">in</span> <span class="n">spider</span><span class="o">.</span><span class="n">get_proxies</span><span class="p">():</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
+                <span class="c1"># 2.3检测代理IP——代理IP检测模块</span>
+                <span class="n">proxy</span> <span class="o">=</span> <span class="n">check_proxy</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
+                <span class="c1"># print(proxy)</span>
+                <span class="c1"># 2.4如果可以用，写入数据库——数据库模块</span>
+                <span class="c1"># 如果speed不为-1，就说明可用</span>
+                <span class="k">if</span> <span class="n">proxy</span><span class="o">.</span><span class="n">speed</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="c1"># 写入数据库——数据库模块</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mongo_pool</span><span class="o">.</span><span class="n">insert_one</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="c1"># 4使用schedule模块，实现每隔一定的时间，执行一次爬取任务</span>
+        <span class="c1"># 4.1定义一个start的类方法</span>
+        <span class="c1"># 4.2创建当前类的对象，调用run方法</span>
+        <span class="n">rs</span> <span class="o">=</span> <span class="n">RunSpider</span><span class="p">()</span>
+        <span class="n">rs</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+        <span class="c1"># 4.3使用schedule模块，每隔一定的时间，执行当前对象的run方法</span>
+        <span class="c1">#4.3.1 修改配置文件，增加爬虫运行时间间隔的配置，单位为小时</span>
+        <span class="n">schedule</span><span class="o">.</span><span class="n">every</span><span class="p">(</span><span class="n">RUN_SPIDERS_INTERVAL</span><span class="p">)</span><span class="o">.</span><span class="n">hours</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="n">rs</span><span class="o">.</span><span class="n">run</span><span class="p">)</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">schedule</span><span class="o">.</span><span class="n">run_pending</span><span class="p">()</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
 <span class="c1">#测试</span>
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">rs</span> <span class="o">=</span> <span class="n">RunSpider</span><span class="p">()</span>
-    <span class="n">rs</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+    <span class="c1"># rs = RunSpider()</span>
+    <span class="c1"># rs.run()</span>
+    <span class="c1">#测试schedule</span>
+    <span class="c1"># def task():</span>
+    <span class="c1">#     print(&quot;哈哈&quot;)</span>
+    <span class="c1"># schedule.every(2).seconds.do(task)</span>
+    <span class="c1"># while True:</span>
+    <span class="c1">#     schedule.run_pending()</span>
+    <span class="c1">#     time.sleep(1)</span>
+    <span class="n">RunSpider</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 <div class="highlight"><pre><span></span><span class="c1">#settings.py</span>
 <span class="n">PROXIES_SPIDERS</span> <span class="o">=</span> <span class="p">[</span>
@@ -1220,6 +1274,156 @@ TEST_TIMEOUT = 10</code></pre>
     <span class="s1">&#39;core.proxy_spider.proxy_spiders.KuaiSpider&#39;</span><span class="p">,</span>
     <span class="s1">&#39;core.proxy_spider.proxy_spiders.ProxylistplusSpider&#39;</span><span class="p">,</span>
 <span class="p">]</span>
+
+<span class="c1">#修改配置文件，增加爬虫运行时间间隔的配置，单位为小时</span>
+<span class="n">RUN_SPIDERS_INTERVAL</span> <span class="o">=</span> <span class="mi">24</span>
+</pre></div>
+<h4>9. 实现代理池的检测模块</h4>
+<ul>
+<li>目的：检查代理IP可用性，保证代理池中代理IP基本可用</li>
+<li>思路：<ol>
+<li>在<code>proxy_test.py</code>中，创建<code>ProxyTester</code>类</li>
+<li>提供一个 <code>run</code> 方法，用于检测代理代理IP核心逻辑<ol>
+<li>从数据库中获取所有代理IP</li>
+<li>遍历代理IP列表</li>
+<li>检查代理可用性<ul>
+<li>如果不可用，让代理分数-1，如果代理分数等于0就从数据库中删除该代理，否则更换新代理</li>
+<li>如果代理可用，就恢复该代理的分数，更新到数据库中</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>为了提高检查的速度，使用异步来执行检测任务<ol>
+<li>把要检测的代理IP，放到队列中</li>
+<li>把检查一个代理可用性的代码，抽取到一个方法中，从队列中获取代理IP,进行检查，检查完毕，调度队列的task_done方法</li>
+<li>通过异步回调，使用死循不断执行这个方法</li>
+<li>开启多一个异步任务，来处理代理IP的检测，可以通过配置文件制定异步数量</li>
+</ol>
+</li>
+<li>使用<code>schedule</code>模块，每隔一定的时间，执行一次检测任务<ol>
+<li>定义类方法<code>start</code>，用于启动检测模块</li>
+<li>在<code>start</code>方法中：<ul>
+<li>创建本类对象</li>
+<li>调用run方法</li>
+<li>每间隔一定时间，执行一下run方法</li>
+</ul>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1">#proxy_test.py</span>
+<span class="kn">from</span> <span class="nn">gevent</span> <span class="kn">import</span> <span class="n">monkey</span>
+<span class="n">monkey</span><span class="o">.</span><span class="n">patch_all</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">gevent.pool</span> <span class="kn">import</span> <span class="n">Pool</span>
+<span class="kn">from</span> <span class="nn">queue</span> <span class="kn">import</span> <span class="n">Queue</span>
+<span class="kn">from</span> <span class="nn">core.db.mongo_pool</span> <span class="kn">import</span> <span class="n">MongoPool</span>
+<span class="kn">from</span> <span class="nn">core.proxy_validate.httpbin_validator</span> <span class="kn">import</span> <span class="n">check_proxy</span>
+<span class="kn">from</span> <span class="nn">settings</span> <span class="kn">import</span> <span class="n">MAX_SCORE</span><span class="p">,</span> <span class="n">TEST_PROXIES_ASYNC_COUNT</span><span class="p">,</span> <span class="n">TEST_PROXIES_INTERVAL</span>
+<span class="kn">import</span> <span class="nn">schedule</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">9. 实现代理池的检测模块</span>
+<span class="sd">目的：检查代理IP可用性，保证代理池中代理IP基本可用</span>
+<span class="sd">思路：</span>
+<span class="sd">1. 在`proxy_test.py`中，创建`ProxyTester`类</span>
+<span class="sd">2. 提供一个 `run` 方法，用于检测代理代理IP核心逻辑</span>
+<span class="sd">    2.1. 从数据库中获取所有代理IP</span>
+<span class="sd">    2.2. 遍历代理IP列表</span>
+<span class="sd">    2.3. 检查代理可用性</span>
+<span class="sd">    2.4如果不可用，让代理分数-1，如果代理分数等于0就从数据库中删除该代理，否则更换新代理</span>
+<span class="sd">    2.5如果代理可用，就恢复该代理的分数，更新到数据库中</span>
+<span class="sd">3. 为了提高检查的速度，使用异步来执行检测任务</span>
+<span class="sd">    3.1. 把要检测的代理IP，放到队列中</span>
+<span class="sd">    3.2. 把检查一个代理可用性的代码，抽取到一个方法中，从队列中获取代理IP,进行检查，检查完毕，调度队列的task_done方法</span>
+<span class="sd">    3.3. 通过异步回调，使用死循不断执行这个方法</span>
+<span class="sd">    3.4. 开启多一个异步任务，来处理代理IP的检测，可以通过配置文件制定异步数量</span>
+<span class="sd">4. 使用`schedule`模块，每隔一定的时间，执行一次检测任务</span>
+<span class="sd">    1. 定义类方法`start`，用于启 动检测模块</span>
+<span class="sd">    2. 在`start`方法中：</span>
+<span class="sd">        创建本类对象</span>
+<span class="sd">        调用run方法</span>
+<span class="sd">        每间隔一定时间，执行一下run方法</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="k">class</span> <span class="nc">ProxyTester</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#创建操作数据库的MongoPool对象</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mongo_pool</span> <span class="o">=</span> <span class="n">MongoPool</span><span class="p">()</span>
+        <span class="c1"># 3.1. 在init方法，创建队列和协程池</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coroutine_pool</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__check_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">temp</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coroutine_pool</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__check_one_proxy</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__check_callback</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#提供一个 run 方法，用于检测代理代理IP核心逻辑</span>
+        <span class="c1"># 2.1.从数据库中获取所有代理IP</span>
+        <span class="n">proxies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mongo_pool</span><span class="o">.</span><span class="n">find_all</span><span class="p">()</span>
+        <span class="c1"># 2.2.遍历代理IP列表</span>
+        <span class="k">for</span> <span class="n">proxy</span> <span class="ow">in</span> <span class="n">proxies</span><span class="p">:</span>
+            <span class="c1">#self.__check_one_proxy(proxy)</span>
+            <span class="c1"># 3.2.把要检测的代理IP，放到队列中</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
+        <span class="c1"># 3.5.开启多一个异步任务，来处理代理IP的检测，可以通过配置文件制定异步数量</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">TEST_PROXIES_ASYNC_COUNT</span><span class="p">):</span>
+            <span class="c1"># 3.4.通过异步回调，使用死循不断执行这个方法</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">coroutine_pool</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__check_one_proxy</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__check_callback</span><span class="p">)</span>
+
+        <span class="c1">#让当前线程，等待队列任务完成</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__check_one_proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#检测一个代理IP的可用性</span>
+        <span class="c1"># 2.3.检查代理可用性</span>
+        <span class="c1"># 3.3.把检查一个代理可用性的代码，抽取到一个方法中，</span>
+        <span class="c1"># 从队列中获取代理IP, 进行检查，</span>
+        <span class="n">proxy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="n">proxy</span> <span class="o">=</span> <span class="n">check_proxy</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
+        <span class="c1"># 2.4如果不可用，让代理分数 - 1</span>
+        <span class="k">if</span> <span class="n">proxy</span><span class="o">.</span><span class="n">speed</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">proxy</span><span class="o">.</span><span class="n">score</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="c1"># 如果代理分数等于0就从数据库中删除该代理</span>
+            <span class="k">if</span> <span class="n">proxy</span><span class="o">.</span><span class="n">score</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mongo_pool</span><span class="o">.</span><span class="n">delete_one</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
+            <span class="c1"># 否则更换新代理</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mongo_pool</span><span class="o">.</span><span class="n">update_one</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># 2.5如果代理可用，就恢复该代理的分数，更新到数据库中</span>
+            <span class="n">proxy</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="n">MAX_SCORE</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mongo_pool</span><span class="o">.</span><span class="n">update_one</span><span class="p">(</span><span class="n">proxy</span><span class="p">)</span>
+        <span class="c1">#调用队列的task_done方法</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="c1"># 创建本类对象</span>
+        <span class="n">proxy_tester</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+        <span class="c1"># 调用run方法</span>
+        <span class="n">proxy_tester</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+        <span class="c1"># 每间隔一定时间，执行一下run方法</span>
+        <span class="n">schedule</span><span class="o">.</span><span class="n">every</span><span class="p">(</span><span class="n">TEST_PROXIES_INTERVAL</span><span class="p">)</span><span class="o">.</span><span class="n">hours</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="n">proxy_tester</span><span class="o">.</span><span class="n">run</span><span class="p">)</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">schedule</span><span class="o">.</span><span class="n">run_pending</span><span class="p">()</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+
+
+<span class="c1">#测试</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">pt</span> <span class="o">=</span> <span class="n">ProxyTester</span><span class="p">()</span>
+    <span class="n">pt</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+<div class="highlight"><pre><span></span><span class="c1">#settings</span>
+<span class="c1">#配置检测代理IP的异步数量</span>
+<span class="n">TEST_PROXIES_ASYNC_COUNT</span> <span class="o">=</span><span class="mi">10</span>
+<span class="c1">#配置检测代理IP时间间隔</span>
+<span class="n">TEST_PROXIES_INTERVAL</span> <span class="o">=</span> <span class="mi">2</span>
 </pre></div>
 
             </div>
