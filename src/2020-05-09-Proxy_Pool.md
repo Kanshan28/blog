@@ -848,6 +848,7 @@ class BaseSpider(object):
         # 4.对外提供一个获取代理IP的方法
         # 4.1.遍历URL列表，获取URL
         for url in self.urls:
+            print("获取URl{}".format(url))
             # 4.2.根据发送请求，获取页面数据
             page = self.get_page_from_url(url)
             # 4.3.解析页面，提取数据，封装为Proxy对象
@@ -1026,6 +1027,20 @@ class BaseSpider(object):
 
 ```python
 #run_spider.py
+#如果要用协程就要打猴子补丁
+from gevent import monkey
+monkey.patch_all()
+#导入协程池
+from gevent.pool import Pool
+import schedule
+import time
+from settings import RUN_SPIDERS_INTERVAL
+
+from settings import PROXIES_SPIDERS
+import importlib
+from core.proxy_validate.httpbin_validator import check_proxy
+from core.db.mongo_pool import MongoPool
+from utils.log import logger
 
 """
 8.5 实现运行爬虫模块
@@ -1039,18 +1054,25 @@ class BaseSpider(object):
     2.3检测代理IP——代理IP检测模块
     2.4如果可以用，写入数据库——数据库模块
     2.5处理异常，防止一个爬虫内部出错了，影响其他的爬虫
+3.使用异步俩执行每一个爬虫任务，以提高抓取代理IP效率
+    3.1在`__ini__`方法中创建协程池对象
+    3.2把处理一个代理爬虫的代码抽到一个方法
+    3.3使用异步执行这个方法
+    3.4调用协程的json方法，让当前线程等待队列任务的完成
+4.使用schedule模块，实现每隔一定的时间，执行一次爬取任务
+    4.1定义一个start的类方法
+    4.2创建当前类的对象，调用run方法
+    4.3使用schedule模块，每隔一定的时间，执行当前对象的run方法
 """
-from settings import PROXIES_SPIDERS
-import importlib
-from core.proxy_validate.httpbin_validator import check_proxy
-from core.db.mongo_pool import MongoPool
-from utils.log import logger
+
 
 class RunSpider(object):
 
     def __init__(self):
         #创建MongoPool对象
         self.mongo_pool = MongoPool()
+        # 3.1在`__ini__`方法中创建协程池对象
+        self.coroutine_pool = Pool()
 
     def get_spider_from_settings(self):
         """根据配置文件信息，获取爬虫对象列表"""
@@ -1064,35 +1086,67 @@ class RunSpider(object):
             #根据类名，从模块中获取类
             cls = getattr(module, class_name)
             #创建爬虫对象
-            spider = cls()
-            # print(spider)
-            yield spider
+            spiders = cls()
+            #print(spider)
+            yield spiders
 
     def run(self):
         #2.1根据配置文件信息，获取爬虫对象列表
         spiders = self.get_spider_from_settings()
         #2.2遍历爬虫对象列表，获取爬虫对象，遍历爬虫对象的get_proxies方法，获取代理Ip
         #2.5处理异常，防止一个爬虫内部出错了，影响其他的爬虫
+        #self.__execute_one_spider_task(spiders)
+        # 3.3使用异步执行这个方法
+        for spider in spiders:
+            self.coroutine_pool.apply_async(self.__execute_one_spider_task, args=(spider, ))
+
+        # 3.4调用协程的json方法，让当前线程等待队列任务的完成
+        self.coroutine_pool.join()
+
+    def __execute_one_spider_task(self, spider):
+        # 3.2把处理一个代理爬虫的代码抽到一个方法
+        #此方法是用来处理一个爬虫任务的
         try:
-            for spider in spiders:
-                #遍历爬虫对象的get_proxies()方法，获取代理IP
-                for proxy in spider.get_proxies():
-                    #print(proxy)
-                    #2.3检测代理IP——代理IP检测模块
-                    proxy = check_proxy(proxy)
-                    #print(proxy)
-                    #2.4如果可以用，写入数据库——数据库模块
-                    #如果speed不为-1，就说明可用
-                    if proxy.speed != -1:
-                        #写入数据库——数据库模块
-                        self.mongo_pool.insert_one(proxy)
+            # 遍历爬虫对象的get_proxies()方法，获取代理IP
+            for proxy in spider.get_proxies():
+                print(proxy)
+                # 2.3检测代理IP——代理IP检测模块
+                proxy = check_proxy(proxy)
+                # print(proxy)
+                # 2.4如果可以用，写入数据库——数据库模块
+                # 如果speed不为-1，就说明可用
+                if proxy.speed != -1:
+                    # 写入数据库——数据库模块
+                    self.mongo_pool.insert_one(proxy)
         except Exception as ex:
             logger.exception(ex)
 
+    @classmethod
+    def start(cls):
+        # 4使用schedule模块，实现每隔一定的时间，执行一次爬取任务
+        # 4.1定义一个start的类方法
+        # 4.2创建当前类的对象，调用run方法
+        rs = RunSpider()
+        rs.run()
+        # 4.3使用schedule模块，每隔一定的时间，执行当前对象的run方法
+        #4.3.1 修改配置文件，增加爬虫运行时间间隔的配置，单位为小时
+        schedule.every(RUN_SPIDERS_INTERVAL).hours.do(rs.run)
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+
 #测试
 if __name__ == '__main__':
-    rs = RunSpider()
-    rs.run()
+    # rs = RunSpider()
+    # rs.run()
+    #测试schedule
+    # def task():
+    #     print("哈哈")
+    # schedule.every(2).seconds.do(task)
+    # while True:
+    #     schedule.run_pending()
+    #     time.sleep(1)
+    RunSpider.start()
 ```
 
 ```python
@@ -1104,5 +1158,152 @@ PROXIES_SPIDERS = [
     'core.proxy_spider.proxy_spiders.KuaiSpider',
     'core.proxy_spider.proxy_spiders.ProxylistplusSpider',
 ]
+
+#修改配置文件，增加爬虫运行时间间隔的配置，单位为小时
+RUN_SPIDERS_INTERVAL = 24
+```
+
+
+
+#### 9. 实现代理池的检测模块
+
+- 目的：检查代理IP可用性，保证代理池中代理IP基本可用
+- 思路：
+  1. 在`proxy_test.py`中，创建`ProxyTester`类
+  2. 提供一个 `run` 方法，用于检测代理代理IP核心逻辑
+     1. 从数据库中获取所有代理IP
+     2. 遍历代理IP列表
+     3. 检查代理可用性
+        - 如果不可用，让代理分数-1，如果代理分数等于0就从数据库中删除该代理，否则更换新代理
+        - 如果代理可用，就恢复该代理的分数，更新到数据库中
+  3. 为了提高检查的速度，使用异步来执行检测任务
+     1. 把要检测的代理IP，放到队列中
+     2. 把检查一个代理可用性的代码，抽取到一个方法中，从队列中获取代理IP,进行检查，检查完毕，调度队列的task_done方法
+     3. 通过异步回调，使用死循不断执行这个方法
+     4. 开启多一个异步任务，来处理代理IP的检测，可以通过配置文件制定异步数量
+  4. 使用`schedule`模块，每隔一定的时间，执行一次检测任务
+     1. 定义类方法`start`，用于启动检测模块
+     2. 在`start`方法中：
+        - 创建本类对象
+        - 调用run方法
+        - 每间隔一定时间，执行一下run方法
+
+```python
+#proxy_test.py
+from gevent import monkey
+monkey.patch_all()
+from gevent.pool import Pool
+from queue import Queue
+from core.db.mongo_pool import MongoPool
+from core.proxy_validate.httpbin_validator import check_proxy
+from settings import MAX_SCORE, TEST_PROXIES_ASYNC_COUNT, TEST_PROXIES_INTERVAL
+import schedule
+import time
+
+"""
+9. 实现代理池的检测模块
+目的：检查代理IP可用性，保证代理池中代理IP基本可用
+思路：
+1. 在`proxy_test.py`中，创建`ProxyTester`类
+2. 提供一个 `run` 方法，用于检测代理代理IP核心逻辑
+    2.1. 从数据库中获取所有代理IP
+    2.2. 遍历代理IP列表
+    2.3. 检查代理可用性
+    2.4如果不可用，让代理分数-1，如果代理分数等于0就从数据库中删除该代理，否则更换新代理
+    2.5如果代理可用，就恢复该代理的分数，更新到数据库中
+3. 为了提高检查的速度，使用异步来执行检测任务
+    3.1. 把要检测的代理IP，放到队列中
+    3.2. 把检查一个代理可用性的代码，抽取到一个方法中，从队列中获取代理IP,进行检查，检查完毕，调度队列的task_done方法
+    3.3. 通过异步回调，使用死循不断执行这个方法
+    3.4. 开启多一个异步任务，来处理代理IP的检测，可以通过配置文件制定异步数量
+4. 使用`schedule`模块，每隔一定的时间，执行一次检测任务
+    1. 定义类方法`start`，用于启 动检测模块
+    2. 在`start`方法中：
+        创建本类对象
+        调用run方法
+        每间隔一定时间，执行一下run方法
+"""
+
+class ProxyTester(object):
+
+    def __init__(self):
+        #创建操作数据库的MongoPool对象
+        self.mongo_pool = MongoPool()
+        # 3.1. 在init方法，创建队列和协程池
+        self.queue = Queue()
+        self.coroutine_pool = Pool()
+
+    def __check_callback(self, temp):
+        self.coroutine_pool.apply_async(self.__check_one_proxy, callback=self.__check_callback)
+
+    def run(self):
+        #提供一个 run 方法，用于检测代理代理IP核心逻辑
+        # 2.1.从数据库中获取所有代理IP
+        proxies = self.mongo_pool.find_all()
+        # 2.2.遍历代理IP列表
+        for proxy in proxies:
+            #self.__check_one_proxy(proxy)
+            # 3.2.把要检测的代理IP，放到队列中
+            self.queue.put(proxy)
+        # 3.5.开启多一个异步任务，来处理代理IP的检测，可以通过配置文件制定异步数量
+        for i in range(TEST_PROXIES_ASYNC_COUNT):
+            # 3.4.通过异步回调，使用死循不断执行这个方法
+            self.coroutine_pool.apply_async(self.__check_one_proxy, callback=self.__check_callback)
+
+        #让当前线程，等待队列任务完成
+        self.queue.join()
+
+    def __check_one_proxy(self):
+        #检测一个代理IP的可用性
+        # 2.3.检查代理可用性
+        # 3.3.把检查一个代理可用性的代码，抽取到一个方法中，
+        # 从队列中获取代理IP, 进行检查，
+        proxy = self.queue.get()
+        proxy = check_proxy(proxy)
+        # 2.4如果不可用，让代理分数 - 1
+        if proxy.speed == -1:
+            proxy.score -= 1
+            # 如果代理分数等于0就从数据库中删除该代理
+            if proxy.score == 0:
+                self.mongo_pool.delete_one(proxy)
+            # 否则更换新代理
+            else:
+                self.mongo_pool.update_one(proxy)
+        else:
+            # 2.5如果代理可用，就恢复该代理的分数，更新到数据库中
+            proxy.score = MAX_SCORE
+            self.mongo_pool.update_one(proxy)
+        #调用队列的task_done方法
+        self.queue.task_done()
+
+    @classmethod
+    def start(cls):
+        # 创建本类对象
+        proxy_tester = cls()
+        # 调用run方法
+        proxy_tester.run()
+        # 每间隔一定时间，执行一下run方法
+        schedule.every(TEST_PROXIES_INTERVAL).hours.do(proxy_tester.run)
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+
+
+
+#测试
+if __name__ == '__main__':
+    pt = ProxyTester()
+    pt.run()
+
+```
+
+
+
+```python
+#settings
+#配置检测代理IP的异步数量
+TEST_PROXIES_ASYNC_COUNT =10
+#配置检测代理IP时间间隔
+TEST_PROXIES_INTERVAL = 2
 ```
 
