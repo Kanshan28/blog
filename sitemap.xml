@@ -12,6 +12,13 @@ xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 </url>
 
 <url>
+    <loc>https://liukanshan.club/archives/2020-05-22-Urls/</loc>
+    <lastmod>2020-05-22</lastmod>
+    <changefreq>always</changefreq>
+    <priority>0.5</priority>
+</url>
+
+<url>
     <loc>https://liukanshan.club/archives/2020-05-09-Proxy_Pool/</loc>
     <lastmod>2020-05-09</lastmod>
     <changefreq>always</changefreq>
