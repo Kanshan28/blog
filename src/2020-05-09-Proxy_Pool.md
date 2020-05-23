@@ -12,8 +12,7 @@ tags:
 excerpt: 这是一个Python代理池的项目。
 ---
 
-
-1.代理池概述
+#### 1.代理池概述
 
 ##### 1.1什么是代理池
 
@@ -673,7 +672,7 @@ class MongoPool(object):
             conditions['protocol'] = {'$in': [1, 2]}
 
         if domain:
-            conditions['disable_domains'] = {'$nin': [domain]}
+            conditions['disable_domain'] = {'$nin': [domain]}
         #满足要求的代理IP列表
         return self.find(conditions, count=count)
 
@@ -698,9 +697,9 @@ class MongoPool(object):
         :return: 如果返回True,就表示添加成功，返回False，表示添加失败
         """
 
-        if self.proxies.count_documents({'_id':ip, 'disable_domains':domain}) == 0:
+        if self.proxies.count_documents({'_id':ip, 'disable_domain':domain}) == 0:
             #如果disable_domains字段中，没有这个域名才添加
-            self.proxies.update_one({'_id':ip}, {'$push': {'disable_domains':domain}})
+            self.proxies.update_one({'_id':ip}, {'$push': {'disable_domain':domain}})
             return True
         else:
             return False
@@ -1307,3 +1306,224 @@ TEST_PROXIES_ASYNC_COUNT =10
 TEST_PROXIES_INTERVAL = 2
 ```
 
+
+
+#### 10.实现代理池的API模块
+
+- 目标：
+  - 为爬虫提供高可用代理IP的服务接口
+- 步骤:
+  - 实现根据协议类型和域名，提供随机的获取高可用代理IP的服务
+  - 实现根据协议类型和域名，提供随机多个高可用代理的服务
+  - 实现给指定的IP上追加不可用域名的服务
+- 实现：
+  - 在`proxy_api.py`中，创建ProxyApi类
+  - 实现初始方法
+    - 初始一个Flask的Web服务
+    - 实现根据协议类型和域名，提供随机的获取高可用代理IP的服务
+      - 可用通过 protocol 和domain 参数对IP进行过滤
+      - protocol：当前请求的协议类型
+      - domain：当前请求域名
+    - 实现根据协议类型和域名，提供获取多个高可用代理IP的服务
+      - 可通过protocol 和domain 参数对IP进行过滤
+    - 实现给指定的IP上追加不可用域名的服务
+      - 如果获取IP的时候，有指定域名参数，将不再获取该IP，从而进一步提高代理IP的可用性
+    - 实现run方法，用于启动Flask的WEB服务
+    - 实现start的类方法，用于通过类名，启动服务
+
+代码：
+
+```python
+#proxy_api.py
+from flask import Flask
+from flask import request
+import json
+
+from core.db.mongo_pool import MongoPool
+from settings import PROXIES_MAX_COUNT
+"""
+10.实现代理池的API模块
+目标：
+为爬虫提供高可用代理IP的服务接口
+步骤:
+    实现根据协议类型和域名，提供随机的获取高可用代理IP的服务
+    实现根据协议类型和域名，提供随机多个高可用代理的服务
+    实现给指定的IP上追加不可用域名的服务
+实现：
+
+1.在`proxy_api.py`中，创建ProxyApi类
+2.实现初始方法
+    2.1初始一个Flask的Web服务
+    2.2实现根据协议类型和域名，提供随机的获取高可用代理IP的服务
+      - 可用通过 protocol 和domain 参数对IP进行过滤
+      - protocol：当前请求的协议类型
+      - domain：当前请求域名
+    2.3实现根据协议类型和域名，提供获取多个高可用代理IP的服务
+      - 可通过protocol 和domain 参数对IP进行过滤
+    2.4实现给指定的IP上追加不可用域名的服务
+      - 如果获取IP的时候，有指定域名参数，将不再获取该IP，从而进一步提高代理IP的可用性
+3.实现run方法，用于启动Flask的WEB服务
+4.实现start的类方法，用于通过类名，启动服务
+"""
+# 1.在`proxy_api.py`中，创建ProxyApi类
+class ProxyApi(object):
+
+    def __init__(self):
+        #2.实现初始方法
+        #2.1初始一个Flask的Web服务
+        self.app = Flask(__name__)
+        #创建MongoPool对象，用于操作数据库
+        self.mongo_pool = MongoPool()
+
+        @self.app.route('/random')
+        def random():
+            """
+            2.2实现根据协议类型和域名，提供随机的获取高可用代理IP的服务
+                可用通过 protocol 和domain 参数对IP进行过滤
+                protocol：当前请求的协议类型
+                domain：当前请求域名
+            :return:
+            """
+            protocol = request.args.get('protocol')
+            domain = request.args.get('domain')
+            proxy = self.mongo_pool.random_proxy(protocol, domain, count=PROXIES_MAX_COUNT)
+
+            if protocol:
+                return '{}://{}:{}'.format(protocol, proxy.ip, proxy.port)
+            else:
+                return '{}:{}'.format(proxy.ip, proxy.port)
+
+        @self.app.route('/proxies')
+        def proxies():
+            """
+            2.3实现根据协议类型和域名，提供获取多个高可用代理IP的服务
+                可通过protocol 和domain 参数对IP进行过滤
+            :return:
+            """
+            #获取协议：http/https
+            protocol = request.args.get('protocol')
+            #域名：如jd.com
+            domain = request.args.get('domain')
+            proxies = self.mongo_pool.get_proxies(protocol, domain, count=PROXIES_MAX_COUNT)
+
+            #proxies 是一个Proxy对象的列表，但是Proxy对象不能进行序列化，需要转换为字典列表
+            #转换为字典列表
+            proxies = [proxy.__dict__ for proxy in proxies]
+            #返回json格式字符串
+            return json.dumps(proxies)
+
+        @self.app.route('/disable_domain')
+        def disable_domain():
+            """
+            2.4实现给指定的IP上追加不可用域名的服务
+            如果获取IP的时候，有指定域名参数，将不再获取该IP，从而进一步提高代理IP的可用性
+            :return:
+            """
+            ip = request.args.get('ip')
+            domain = request.args.get('domain')
+
+            if ip is None:
+                return '请提供IP参数'
+            if domain is None:
+                return '请提供domain参数'
+
+            self.mongo_pool.disable_domain(ip, domain)
+            return '{} 禁用域名 {} 成功'.format(ip, domain)
+
+    def run(self):
+        """3.实现run方法，用于启动Flask的WEB服务"""
+        self.app.run('0.0.0.0', port=16888)
+
+    @classmethod
+    def start(cls):
+        # 4.实现start的类方法，用于通过类名，启动服务
+        proxy_api = cls()
+        proxy_api.run()
+
+#测试
+if __name__ == '__main__':
+    # proxy_api = ProxyApi()
+    # proxy_api.run()
+    ProxyApi.start()
+```
+
+```python
+#settings
+#配置获取代理的IP最大数量，这个越小可用性就越高，但是随机性越差
+PROXIES_MAX_COUNT = 50
+```
+
+
+
+#### 11.实现代理池的启动入口
+
+- 目标：把 `启动爬虫`，`启动检测代理IP`,`启动WEB服务`  统一到一起
+- 思路：
+  - 开启三个进程，用于启动爬虫，检测代理IP，WEB服务
+- 步骤：
+  - 定义一个run方法用于启动代理池
+    - 定义一个列表，用于存储要启动的进程
+    - 创建 `启动爬虫` 的进程，添加到列表中
+    - 创建 `启动检测` 的进程，添加到列表中
+    - 创建 `启动提供API服务` 的进程，添加到列表中
+    - 遍历进程列表，启动所有进程
+    - 遍历进程列表，让主进程等待子进程的完成
+  - 在 `if __name__ == '__main__':`中调用run方法
+
+代码：
+
+```python
+#main.py
+from multiprocessing import Process
+from core.proxy_spider.run_spiders import RunSpider
+from core.proxy_test import ProxyTester
+from core.proxy_api import ProxyApi
+
+"""
+11.实现代理池的启动入口
+目标：把 `启动爬虫`，`启动检测代理IP`,`启动WEB服务`  统一到一起
+思路：
+开启三个进程，用于启动爬虫，检测代理IP，WEB服务
+步骤：
+
+1.定义一个run方法用于启动代理池
+    1.1定义一个列表，用于存储要启动的进程
+    1.2创建 `启动爬虫` 的进程，添加到列表中
+    1.3创建 `启动检测` 的进程，添加到列表中
+    1.4创建 `启动提供API服务` 的进程，添加到列表中
+    1.5遍历进程列表，启动所有进程
+    1.6遍历进程列表，让主进程等待子进程的完成
+2.在 `if __name__ == '__main__':`中调用run方法
+"""
+
+
+# 1.定义一个run方法用于启动代理池
+def run():
+    # 1.1定义一个列表，用于存储要启动的进程
+    process_lis = []
+    # 1.2创建 `启动爬虫` 的进程，添加到列表中
+    process_lis.append(Process(target=RunSpider.start))
+    # 1.3创建 `启动检测` 的进程，添加到列表中
+    process_lis.append(Process(target=ProxyTester.start))
+    # 1.4创建 `启动提供API服务` 的进程，添加到列表中
+    process_lis.append(Process(target=ProxyApi.start))
+    # 1.5遍历进程列表，启动所有进程
+    for process in process_lis:
+        #设置守护进程
+        process.daemon = True
+        process.start()
+    # 1.6遍历进程列表，让主进程等待子进程的完成
+    for process in process_lis:
+        process.join()
+
+if __name__ == '__main__':
+    run()
+```
+
+
+
+附思维导图：
+
+
+
+![代理池项目思维导图](.\images\2020-5-9-3.png)
