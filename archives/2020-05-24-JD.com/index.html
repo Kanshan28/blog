@@ -1,0 +1,1373 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+    <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <meta name="HandheldFriendly" content="true">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="keywords" content="Maverick,刘看山,Galileo,blog" />
+    <meta name="generator" content="Maverick 1.1" />
+    <meta name="template" content="Galileo" />
+    <link rel="alternate" type="application/rss+xml" title="刘看山的博客 &raquo; RSS 2.0" href="https://liukanshan.club/feed/index.xml" />
+    <link rel="alternate" type="application/atom+xml" title="刘看山的博客 &raquo; ATOM 1.0" href="https://liukanshan.club/feed/atom/index.xml" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/galileo-3f4dcc35c9.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/ExSearch/ExSearch-182e5a8868.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/katex.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Fira+Code&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700&display=swap">
+    <script>
+        var ExSearchConfig = {
+            root: "",
+            api: "https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/59ba369491a044fee116a53032947ee1.json"
+        }
+    </script>
+    
+<title>京东全网爬虫 - 刘看山的博客</title>
+<meta name="author" content="Kanshan" />
+<meta name="description" content="获取京东网站商品信息" />
+<meta property="og:title" content="京东全网爬虫 - 刘看山的博客" />
+<meta property="og:description" content="获取京东网站商品信息" />
+<meta property="og:site_name" content="刘看山的博客" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://liukanshan.club/archives/2020-05-24-JD.com/" />
+<meta property="og:image" content="" />
+<meta property="article:published_time" content="2020-05-24T16:20:00-00.00" />
+<meta name="twitter:title" content="京东全网爬虫 - 刘看山的博客" />
+<meta name="twitter:description" content="获取京东网站商品信息" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:image" content="" />
+
+
+    
+<meta http-equiv="x-dns-prefetch-control" content="on">
+<link rel="dns-prefetch" href="//cdn.jsdelivr.net" />
+<link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/logo-32.png?v=yyLyaqbyRG">
+<link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/logo-16.png?v=yyLyaqbyRG">
+
+    </head>
+    
+    <body>
+        
+        <div class="container">
+            <header id="ga-header">
+                <div first>
+                    <aside id="ga-brand">
+                        <h1 class="brand"><a class="no-style" href="https://liukanshan.club/">刘看山的博客</a></h1>
+                        <p>学问之道无他，求其放心而已!</p>
+                    </aside>
+                </div>
+                <div second id="ga-nav">
+                    <nav class="navs">
+                        <ul><li><a class="ga-highlight" href="https://liukanshan.club/" target="_self">首页</a></li><span class="separator">·</span><li><a class="ga-highlight" href="https://liukanshan.club/archives/" target="_self">归档</a></li><span class="separator">·</span><li><a class="ga-highlight" href="https://liukanshan.club/about/" target="_self">关于</a></li><span class="separator">·</span><li><a href="#" target="_self" class="search-form-input ga-highlight">搜索</a></li></ul>
+                    </nav>
+                </div>
+            </header>
+            <div class="wrapper">
+                
+<main>    
+    <section class="ga-section ga-content">
+        <article class="yue">
+            <h1 class="ga-post_title">京东全网爬虫</h1>
+            <span class="ga-post_meta ga-mono">
+                <span>Kanshan</span>
+                <time>
+                    2020-05-24
+                </time>
+                
+                in <a no-style class="category" href="https://liukanshan.club/category/爬虫/">
+                    爬虫
+                </a>
+                
+                
+                <span class="leancloud_visitors" 
+                    id="/archives/2020-05-24-JD.com/" 
+                    data-flag-title="京东全网爬虫"> · <i class="leancloud-visitors-count"></i> Views</span>
+                
+            </span>
+            <div class="ga-content_body">
+                <h4>1.需求</h4>
+<ul>
+<li>目标：明确要抓取哪些信息</li>
+</ul>
+<h5>1.1抓取首页的分类信息</h5>
+<ul>
+<li><p>抓取数据：各级分类的名称和 URL</p>
+<p><figure style="flex: 79.55128205128206" ><img width="1241" height="780" src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/archives/assets/a77bdb583f81e029cae79cd5a9a934f5.png" /></figure></p>
+</li>
+</ul>
+<h5>1.2 抓取商品信息</h5>
+<ul>
+<li><p>抓取：商品名称，商品价格，商品评论数，商品店铺，商品促销，商品选项，商品图片的URL</p>
+<p><figure style="flex: 97.06601466992664" ><img width="1588" height="818" src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/archives/assets/00df151d93982a5366f7aff09ee205d3.png" /></figure></p>
+</li>
+</ul>
+<h4>2.开发环境</h4>
+<ul>
+<li>平台：Windows 也可以运行在Mac 和Linux</li>
+<li>开发语言：Python</li>
+<li>开发工具：Pycharm</li>
+<li>技术选择：<ul>
+<li>由于全网爬虫，抓取页面非常多，为了提高抓的速度，选择使用scrapy框架+scrapy_redis分布式组件</li>
+<li>由于京东全网的数据量达到了亿级，存储又是结构化数据，数据库选择使用MongoDB</li>
+</ul>
+</li>
+</ul>
+<h4>3.京东全网爬虫的实现步骤</h4>
+<blockquote><p>我们采用广度优先策略，把分类和商品信息分开来做</p>
+<p>好处：可以提高程序的稳定性</p>
+</blockquote>
+<h5>3.1 总体设计</h5>
+<p><figure style="flex: 98.27956989247312" ><img width="914" height="465" src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/archives/assets/08879e4b728db04cadf85f120db9afc2.png" /></figure></p>
+<h5>3.2 实现步骤</h5>
+<blockquote><p>1.创建爬虫项目</p>
+<p>2.根据需求，定义数据模型</p>
+<p>3.实现分类爬虫</p>
+<p>4.保存分类信息</p>
+<p>5.实现商品爬虫</p>
+<p>6.保存商品信息</p>
+<p>7.实现随机User-Agent和代理IP下载器中间件，解决IP反爬</p>
+</blockquote>
+<h5>3.3创建爬虫项目</h5>
+<ul>
+<li><code>scrapy startproject mall_spider</code></li>
+</ul>
+<h4>4. 明确要抓取的数据（定义数据模型）</h4>
+<blockquote><p>爬虫数据模型，我们只能根据需求，定义一个大概，随着对项目的实现可能会对数据模型作相应的修改</p>
+</blockquote>
+<h5>4.1 类别数据模型</h5>
+<ul>
+<li>类别数据模型类：用于存储类别信息（Category）- 字段：<ul>
+<li><code>b_category_name</code>：大类别名称</li>
+<li><code>b_category_url</code>：大类别URL</li>
+<li><code>m_category_name</code>：中分类名称</li>
+<li><code>m_category_url</code>：中分类URL</li>
+<li><code>s_category_name</code>：小分类名称</li>
+<li><code>s_category_url</code>：小分类URL</li>
+</ul>
+</li>
+<li>代码：</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Category</span><span class="p">(</span><span class="n">scrapy</span><span class="o">.</span><span class="n">Item</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;商品类别&quot;&quot;&quot;</span>
+    <span class="c1">#大分类名称</span>
+    <span class="n">b_category_name</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span>
+    <span class="c1">#大分类URL</span>
+    <span class="n">b_category_url</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span>
+    <span class="c1">#中分类名称</span>
+    <span class="n">m_category_name</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span>
+    <span class="c1">#中分类URL</span>
+    <span class="n">m_category_url</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span>
+    <span class="c1">#小分类名称</span>
+    <span class="n">s_category_name</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span>
+    <span class="c1">#小分类URL</span>
+    <span class="n">s_category_url</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span>
+</pre></div>
+<h5>4.2商品数据模型</h5>
+<ul>
+<li>商品数据模型类：用于存储商品信息（Product）</li>
+<li>字段：<ul>
+<li><code>product_category</code>：商品类别</li>
+<li><code>product_category_id</code>：商品类别ID</li>
+<li><code>product_sku_id</code>：商品ID</li>
+<li><code>product_name</code>：商品名称</li>
+<li><code>product_img_url</code>：商品图片URL</li>
+<li><code>product_book_info</code>：图书信息,作者，出版社</li>
+<li><code>product_option</code>：商品选项</li>
+<li><code>product_shop</code>：商品店铺</li>
+<li><code>product_comment：</code>商品评论数量</li>
+<li><code>product_ad</code>：商品促销</li>
+</ul>
+</li>
+<li><p><code>product_price</code>：商品价格</p>
+</li>
+<li><p>代码</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Product</span><span class="p">(</span><span class="n">scrapy</span><span class="o">.</span><span class="n">Item</span><span class="p">):</span>
+    <span class="n">product_category</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span> <span class="c1">#商品类别</span>
+    <span class="n">product_category_id</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span> <span class="c1">#商品类别ID</span>
+    <span class="n">product_sku_id</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span> <span class="c1">#商品ID</span>
+    <span class="n">product_name</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span> <span class="c1">#商品名称</span>
+    <span class="n">product_img_url</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span> <span class="c1">#商品图片URL</span>
+    <span class="n">product_book_info</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span> <span class="c1">#图书信息, 作者，出版社</span>
+    <span class="n">product_option</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span> <span class="c1">#商品选项</span>
+    <span class="n">product_shop</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span> <span class="c1">#商品店铺</span>
+    <span class="n">product_comments</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span> <span class="c1">#商品评论数量</span>
+    <span class="n">product_ad</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span> <span class="c1">#商品促销</span>
+    <span class="n">product_price</span> <span class="o">=</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Field</span><span class="p">()</span> <span class="c1">#商品价格</span>
+</pre></div>
+<h4>5. 商品分类爬虫</h4>
+<ul>
+<li>目标：抓取各级分类信息</li>
+<li>步骤：<ol>
+<li>分析页面，确认分类信息的URL</li>
+<li>创建类别爬虫，抓取数据</li>
+</ol>
+</li>
+</ul>
+<h5>5.1 分析，分类信息的URL</h5>
+<ul>
+<li><p>目标：确认分类信息的URL</p>
+</li>
+<li><p>步骤：</p>
+<ol>
+<li><p>进入到京东首页</p>
+</li>
+<li><p>邮件检查，打开开发者工具，搜索 <code>家用电器</code></p>
+</li>
+<li><p>确认分类的URL</p>
+<blockquote><p><a href="https://dc.3.cn/category/get">https://dc.3.cn/category/get</a></p>
+</blockquote>
+</li>
+</ol>
+</li>
+</ul>
+<h5>5.2 创建爬虫，抓取数据</h5>
+<ul>
+<li>目标：抓取分类数据，交给引擎</li>
+<li>步骤：<ol>
+<li>创建类别爬虫</li>
+<li>指定起始URL</li>
+<li>解析数据，交给引擎</li>
+</ol>
+</li>
+</ul>
+<h6>5.2.1 创建爬虫</h6>
+
+<pre><code>进入项目目录： cd mall_spider
+创建爬虫： scrapy genspider category_spider jd.com</code></pre>
+<h6>5.2.2 指定起始URL</h6>
+
+<pre><code>修改起始URL： https://dc.3.cn/category/get</code></pre>
+<h6>5.2.3 解析数据，交给引擎</h6>
+<ul>
+<li>分析数据格式</li>
+</ul>
+<p><figure style="flex: 107.57281553398059" ><img width="1108" height="515" src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/archives/assets/30f7dcc15422a5ce4d41d9ad3d617f22.png" /></figure></p>
+<ul>
+<li><p>三类数据格式：</p>
+<ul>
+<li><p><code>list.jd.com/list.html?cat=1713,3286</code>|科学与自然||0</p>
+<blockquote><p>对应的url：<code>list.jd.com/list.html?cat=1713,3286</code> 本身就是个url</p>
+</blockquote>
+</li>
+<li><p><code>13765-13866-13867</code>|游戏机||0</p>
+<blockquote><p>对应的url： <a href="https://list.jd.com/list.html?cat=13765,13866,13867">https://list.jd.com/list.html?cat=13765,13866,13867</a></p>
+<p>url构造：<a href="https://list.jd.com/list.html?cat={}">https://list.jd.com/list.html?cat={}</a></p>
+<ul>
+<li>把 <code>-</code>替换成 <code>,</code>  然后填充到占位的地方</li>
+</ul>
+</blockquote>
+</li>
+<li><p><code>1713-3287</code>|计算机与互联网||0</p>
+<blockquote><p><a href="https://channel.jd.com/1713-3287.html">https://channel.jd.com/1713-3287.html</a></p>
+<p>url构造： <a href="https://channel.jd.com/{}.html">https://channel.jd.com/{}.html</a></p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>代码：</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1">#jd_category.py</span>
+<span class="kn">import</span> <span class="nn">scrapy</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">mall_spider.items</span> <span class="kn">import</span> <span class="n">Category</span>
+
+
+<span class="k">class</span> <span class="nc">JdCategorySpider</span><span class="p">(</span><span class="n">scrapy</span><span class="o">.</span><span class="n">Spider</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;jd_category&#39;</span>
+    <span class="n">allowed_domains</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;3.cn&#39;</span><span class="p">]</span>
+    <span class="n">start_urls</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;http://dc.3.cn/category/get&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="c1">#pass</span>
+        <span class="c1"># print(response.body.decode(&#39;GBK&#39;))</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;GBK&#39;</span><span class="p">))</span>
+        <span class="n">datas</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+        <span class="c1">#遍历数据列表</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">datas</span><span class="p">:</span>
+
+            <span class="n">item</span> <span class="o">=</span> <span class="n">Category</span><span class="p">()</span>
+
+            <span class="n">b_category</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">b_category_info</span> <span class="o">=</span> <span class="n">b_category</span><span class="p">[</span><span class="s1">&#39;n&#39;</span><span class="p">]</span>
+            <span class="c1"># print(&#39;大分类：{}&#39;.format(b_category_info))</span>
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;b_category_name&#39;</span><span class="p">],</span> <span class="n">item</span><span class="p">[</span><span class="s1">&#39;b_category_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_category_name_url</span><span class="p">(</span><span class="n">b_category_info</span><span class="p">)</span>
+
+            <span class="c1">#中分类信息列表</span>
+            <span class="n">m_category_list</span> <span class="o">=</span> <span class="n">b_category</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">]</span>
+            <span class="c1">#遍历中分类列表</span>
+            <span class="k">for</span> <span class="n">m_category</span> <span class="ow">in</span> <span class="n">m_category_list</span><span class="p">:</span>
+                <span class="c1">#中分类信息</span>
+                <span class="n">m_category_info</span> <span class="o">=</span> <span class="n">m_category</span><span class="p">[</span><span class="s1">&#39;n&#39;</span><span class="p">]</span>
+                <span class="c1"># print(&#39;中分类：{}&#39;.format(m_category_info))</span>
+                <span class="n">item</span><span class="p">[</span><span class="s1">&#39;m_category_name&#39;</span><span class="p">],</span> <span class="n">item</span><span class="p">[</span><span class="s1">&#39;m_category_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_category_name_url</span><span class="p">(</span><span class="n">m_category_info</span><span class="p">)</span>
+
+                <span class="c1">#小分类数据列表</span>
+                <span class="n">s_category_list</span> <span class="o">=</span> <span class="n">m_category</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">s_category</span> <span class="ow">in</span> <span class="n">s_category_list</span><span class="p">:</span>
+                    <span class="n">s_category_info</span> <span class="o">=</span> <span class="n">s_category</span><span class="p">[</span><span class="s1">&#39;n&#39;</span><span class="p">]</span>
+                    <span class="c1"># print(&#39;小分类：{}&#39;.format(s_category_info))</span>
+                    <span class="n">item</span><span class="p">[</span><span class="s1">&#39;s_category_name&#39;</span><span class="p">],</span> <span class="n">item</span><span class="p">[</span><span class="s1">&#39;s_category_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_category_name_url</span><span class="p">(</span><span class="n">s_category_info</span><span class="p">)</span>
+                    <span class="c1"># print(item)</span>
+                    <span class="c1">#把数据交给引擎</span>
+                    <span class="k">yield</span> <span class="n">item</span>
+
+    <span class="k">def</span> <span class="nf">get_category_name_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category_info</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        根据分类信息，提取名称和URL</span>
+<span class="sd">        :param category_info:  分类信息</span>
+<span class="sd">        :return: 分类的名称和URL</span>
+
+<span class="sd">        ① list.jd.com/list.html?cat=1713,3286|科学与自然||0</span>
+<span class="sd">        对应的url：list.jd.com/list.html?cat=1713,3286 本身就是个url</span>
+
+<span class="sd">        ② 1713-3287|计算机与互联网||0</span>
+<span class="sd">        https://channel.jd.com/1713-3287.html</span>
+<span class="sd">        url构造： https://channel.jd.com/{}.html</span>
+
+<span class="sd">        ③ 13765-13866-13867|游戏机||0</span>
+<span class="sd">        对应的url： https://list.jd.com/list.html?cat=13765,13866,13867</span>
+<span class="sd">         url构造：https://list.jd.com/list.html?cat={}</span>
+<span class="sd">            把 `-`替换成 `,`  然后填充到占位的地方</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">category</span> <span class="o">=</span> <span class="n">category_info</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">)</span>
+        <span class="n">category_url</span> <span class="o">=</span> <span class="n">category</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>    <span class="c1">#分类URL</span>
+        <span class="n">category_name</span> <span class="o">=</span> <span class="n">category</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="c1">#分类名称</span>
+
+        <span class="c1">#处理第一类URL</span>
+        <span class="k">if</span> <span class="n">category_url</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;jd.com&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1">#URL进行补全</span>
+            <span class="n">category_url</span> <span class="o">=</span> <span class="s1">&#39;https://&#39;</span> <span class="o">+</span> <span class="n">category_url</span>
+        <span class="k">elif</span> <span class="n">category_url</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1">#1713-3287|计算机与互联网||0</span>
+            <span class="n">category_url</span> <span class="o">=</span> <span class="s1">&#39;https://channel.jd.com/</span><span class="si">{}</span><span class="s1">.html&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">category_url</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">#13765-13866-13867|游戏机||0</span>
+            <span class="c1">#把url中的 &#39;-&#39; 替换为 &#39;,&#39;</span>
+            <span class="n">category_url</span> <span class="o">=</span> <span class="n">category_url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;,&#39;</span><span class="p">)</span>
+            <span class="c1">#补全url:</span>
+            <span class="n">category_url</span> <span class="o">=</span> <span class="s1">&#39;https://list.jd.com/list.html?cat=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">category_url</span><span class="p">)</span>
+
+        <span class="c1">#返回类别的名称和URL</span>
+        <span class="k">return</span> <span class="n">category_name</span><span class="p">,</span> <span class="n">category_url</span>
+</pre></div>
+<h4>6. 保存分类信息</h4>
+<ul>
+<li>目标：把分类信息保存到MongoDB</li>
+<li>步骤：<ul>
+<li>实现保存分类的Pipeline类</li>
+<li>在settings.py开启，类别的Pipeline</li>
+</ul>
+</li>
+</ul>
+<h5>6.1 实现分类保存的Pipline类</h5>
+<ul>
+<li>步骤：<ol>
+<li>open_spider 方法中，链接MongoDB数据库，获取要操作的集合</li>
+<li>process_item 方法中，向MongoDB中插入类别数据</li>
+<li>close_spider 方法中，关闭MongoDB的链接</li>
+</ol>
+</li>
+<li>代码：</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1">#pipelines.py</span>
+
+<span class="c1"># Define your item pipelines here</span>
+<span class="c1">#</span>
+<span class="c1"># Don&#39;t forget to add your pipeline to the ITEM_PIPELINES setting</span>
+<span class="c1"># See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">6.1 实现分类保存的Pipline类</span>
+<span class="sd">  1. open_spider 方法中，链接MongoDB数据库，获取要操作的集合</span>
+<span class="sd">  2. process_item 方法中，向MongoDB中插入类别数据</span>
+<span class="sd">  3. close_spider 方法中，关闭MongoDB的链接</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">mall_spider.spiders.jd_category</span> <span class="kn">import</span> <span class="n">JdCategorySpider</span>
+<span class="kn">from</span> <span class="nn">pymongo</span> <span class="kn">import</span> <span class="n">MongoClient</span>
+<span class="kn">from</span> <span class="nn">mall_spider.settings</span> <span class="kn">import</span> <span class="n">MONGODB_URL</span>
+
+
+<span class="k">class</span> <span class="nc">CategoryPipeline</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">open_spider</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spider</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;当爬虫启动的时候执行&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spider</span><span class="p">,</span> <span class="n">JdCategorySpider</span><span class="p">):</span>
+            <span class="c1">#1. open_spider 方法中，链接MongoDB数据库，获取要操作的集合</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span><span class="n">MONGODB_URL</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">collections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">[</span><span class="s1">&#39;jd&#39;</span><span class="p">][</span><span class="s1">&#39;category&#39;</span><span class="p">]</span>
+
+
+
+    <span class="k">def</span> <span class="nf">process_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">spider</span><span class="p">):</span>
+        <span class="c1">#  2. process_item 方法中，向MongoDB中插入类别数据</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spider</span><span class="p">,</span> <span class="n">JdCategorySpider</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">insert_one</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">item</span>
+
+    <span class="k">def</span> <span class="nf">close_spider</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spider</span><span class="p">):</span>
+        <span class="c1">#  3. close_spider 方法中，关闭MongoDB的链接</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spider</span><span class="p">,</span> <span class="n">JdCategorySpider</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+<div class="highlight"><pre><span></span><span class="c1">#settings.py</span>
+<span class="c1">#配置MongoDB的URL</span>
+<span class="n">MONGODB_URL</span> <span class="o">=</span> <span class="s1">&#39;mongodb://127.0.0.1:27017&#39;</span>
+</pre></div>
+<h5>6.2 在 <code>settings.py</code> 开启，类别的Pipeline</h5>
+<div class="highlight"><pre><span></span><span class="n">ITEM_PIPELINES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;mall_spider.pipelines.CategoryPipeline&#39;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+<h4>7. 实现商品爬虫</h4>
+<ul>
+<li><p>总体设计：</p>
+<ol>
+<li>把MongoDB中存储的分类信息，放到redis_key指定列表中</li>
+<li>支持分布式爬虫，当然也可以在一台电脑上运行多次，以启动多个进程，充分使用CPU的多核</li>
+<li>所以这里的爬虫，先从一个分类开始抓就可以了，以后再改造为分布式</li>
+</ol>
+<p><figure style="flex: 98.27956989247312" ><img width="914" height="465" src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/archives/assets/08879e4b728db04cadf85f120db9afc2.png" /></figure></p>
+</li>
+<li><p>目标：抓取商品数据</p>
+</li>
+<li><p>步骤：</p>
+<ol>
+<li>分析，确定数据所在的URL</li>
+<li>代码实现（核心）</li>
+<li>商品爬虫实现分布式</li>
+</ol>
+</li>
+</ul>
+<h5>7.1  分析，确定数据所在的URL</h5>
+<ul>
+<li>列表页<ul>
+<li>抓取商品<code>skuid</code>，实现翻页，确定翻页的URL</li>
+<li>获取商品的基本信息、通过手机抓包（APP），确定URL</li>
+<li>PC详情页面，确定商品的促销信息的URL</li>
+<li>PC详情页面，确定评论信息的URL</li>
+<li>PC详情页面，确定商品价格信息的URL</li>
+</ul>
+</li>
+</ul>
+<h5>7.2 代码实现</h5>
+<ul>
+<li><p>步骤：</p>
+<ol>
+<li><p>重写start_requests方法，根据分类信息构建列表页的请求</p>
+</li>
+<li><p>解析列表页，提取商品的<code>skuid</code>，构建商品基本信息请求，实现翻页</p>
+<ol>
+<li><p>确定商品基本的信息请求（用Charles抓包）</p>
+<ol>
+<li>URL:  <a href="https://cdnware.m.jd.com/c1/skuDetail/apple/7.3.0/100005224262.json">https://cdnware.m.jd.com/c1/skuDetail/apple/7.3.0/100005224262.json</a> </li>
+<li>请求方法：Get</li>
+<li>参数/数据：<code>100005224262</code>商品skuid</li>
+</ol>
+</li>
+<li><p>解析列表页，提取商品的skuid</p>
+<p><code>//li[contains(@class,"gl-item")]/@data-sku</code></p>
+</li>
+<li><p>构建商品基本的信息请求</p>
+</li>
+</ol>
+</li>
+<li><p>解析商品评价信息，构建价格信息的请求</p>
+<ul>
+<li><p>解析商品基本信息</p>
+<ol>
+<li><code>product_category_id</code>：商品类别ID</li>
+<li><code>product_name</code>：商品名称</li>
+<li><code>product_img_url</code>：商品图片URL</li>
+<li><code>product_book_info</code>：图书信息,作者，出版社</li>
+<li><code>product_option</code>：商品选项</li>
+<li><code>product_shop</code>：商品店铺</li>
+</ol>
+</li>
+<li><p>构建商品出校信息的请求</p>
+<ol>
+<li><p>准备促销信息的请求</p>
+<ol>
+<li><p>URL ： <a href="https://cd.jd.com/promotion/v2?skuId=100008828920&amp;area=2_2834_51982_0&amp;cat=737%2C794%2C798">https://cd.jd.com/promotion/v2?skuId=100008828920&amp;area=2_2834_51982_0&amp;cat=737%2C794%2C798</a></p>
+</li>
+<li><p>请求方法：Get</p>
+</li>
+<li><p>参数/数据：</p>
+<blockquote><p>skuId=100008828920  #商品SKUID</p>
+<p>area=2_2834_51982_0  #区域固定值</p>
+<p>cat=737%2C794%2C798  #类别</p>
+</blockquote>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><p>解析促销信息，构建商品评价信息的请求</p>
+<ol>
+<li>解析促销信息</li>
+</ol>
+<ul>
+<li>product_ad:商品促销</li>
+</ul>
+<ol>
+<li>构建商品评价信息的请求<ul>
+<li>准备评价信息的请求<ul>
+<li>Url： <a href="https://club.jd.com/comment/productCommentSummaries.action?referenceIds=100004770235">https://club.jd.com/comment/productCommentSummaries.action?referenceIds=100004770235</a> </li>
+<li>方法：Get</li>
+<li>参数：referenceIds=100004770235   即是商品的SKU_ID</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+</li>
+<li><p>解析商品评价信息，构建价格信息的请求</p>
+<ol>
+<li>解析商品信息 <ol>
+<li>product_comments：商品评论数量</li>
+<li>评价数量，好评数量，差评数量，好评率</li>
+</ol>
+</li>
+<li>构建价格信息的请求<ol>
+<li>准备价格请求：<ol>
+<li>URL： <a href="https://p.3.cn/prices/mgets?skuIds=J_100004770235">https://p.3.cn/prices/mgets?skuIds=J_100004770235</a> </li>
+<li>请求方法：</li>
+<li>参数：skuIds=J_100004770235 </li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>解析价格信息</p>
+<ol>
+<li>product_price：商品价格</li>
+</ol>
+</li>
+<li><p>代码：</p>
+</li>
+</ol>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1">#jd_product.py</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">scrapy</span>
+<span class="kn">from</span> <span class="nn">mall_spider.items</span> <span class="kn">import</span> <span class="n">Product</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">jsonpath</span> <span class="kn">import</span> <span class="n">jsonpath</span>
+
+
+<span class="k">class</span> <span class="nc">JdProductSpider</span><span class="p">(</span><span class="n">scrapy</span><span class="o">.</span><span class="n">Spider</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;jd_product&#39;</span>
+    <span class="n">allowed_domains</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;jd.com&#39;</span><span class="p">,</span> <span class="s1">&#39;3.cn&#39;</span><span class="p">]</span>
+    <span class="c1"># start_urls = [&#39;http://jd.com/&#39;]</span>
+
+    <span class="k">def</span> <span class="nf">start_requests</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;重写start_requests方法，根据分类信息构建列表页的请求&#39;&#39;&#39;</span>
+        <span class="n">category</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;b_category_name&quot;</span><span class="p">:</span> <span class="s2">&quot;工业品&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;b_category_url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://imall.jd.com/&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;m_category_name&quot;</span><span class="p">:</span> <span class="s2">&quot;实验用品&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;m_category_url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://i-list.jd.com/list.html?cat=14065,14137&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;s_category_name&quot;</span><span class="p">:</span> <span class="s2">&quot;实验室设备&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;s_category_url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://i-list.jd.com/list.html?cat=14065,14137,14140&quot;</span>
+        <span class="p">}</span>
+
+        <span class="c1"># category = {</span>
+        <span class="c1">#     &quot;b_category_name&quot;:&quot;家用电器&quot;,</span>
+        <span class="c1">#     &quot;b_category_url&quot;:&quot;https://jiadian.jd.com&quot;,</span>
+        <span class="c1">#     &quot;m_category_name&quot;: &quot;电视&quot;,</span>
+        <span class="c1">#     &quot;m_category_url&quot;: &quot;https://list.jd.com/list.html?cat=737,794,798&quot;,</span>
+        <span class="c1">#     &quot;s_category_name&quot;: &quot;超薄电视&quot;,</span>
+        <span class="c1">#     &quot;s_category_url&quot;: &quot;https://list.jd.com/list.html?cat=737,794,798&amp;ev=4155_76344&amp;sort=sort_rank_asc&amp;trans=1&amp;JL=2_1_0#J_crumbsBar&quot;</span>
+        <span class="c1"># }</span>
+
+        <span class="c1"># 根据小分类的url构建列表页面请求</span>
+        <span class="k">yield</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">category</span><span class="p">[</span><span class="s1">&#39;s_category_url&#39;</span><span class="p">],</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;category&#39;</span><span class="p">:</span> <span class="n">category</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="n">category</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;category&#39;</span><span class="p">]</span>
+        <span class="c1">#</span>
+        <span class="c1">#解析列表页，提取商品的skuid</span>
+        <span class="c1"># sku_ids = response.xpath(&#39;//li[contains(@class,&quot;gl-item&quot;)]/@data-sku&#39;).extract()</span>
+        <span class="n">sku_ids</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="s1">&#39;//div[contains(@class, &quot;j-sku-item&quot;)]/@data-sku&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">extract</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sku_ids</span><span class="p">:</span>
+            <span class="n">sku_ids</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="s1">&#39;//li[contains(@class,&quot;gl-item&quot;)]/@data-sku&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">extract</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">sku_id</span> <span class="ow">in</span> <span class="n">sku_ids</span><span class="p">:</span>
+            <span class="c1">#创建Product,用于保存商品数据</span>
+            <span class="c1">#print(sku_id)</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="n">Product</span><span class="p">()</span>
+            <span class="c1">#设置商品类别</span>
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_category&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">category</span>
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_sku_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sku_id</span>
+            <span class="c1">#构建商品的基本信息请求</span>
+            <span class="n">product_base_url</span> <span class="o">=</span> <span class="s1">&#39;https://cdnware.m.jd.com/c1/skuDetail/apple/7.3.0/</span><span class="si">{}</span><span class="s1">.json&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sku_id</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">product_base_url</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parse_product_base</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;item&#39;</span><span class="p">:</span> <span class="n">item</span><span class="p">})</span>
+
+        <span class="c1">#获取下一页的URL</span>
+        <span class="n">next_url</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="s1">&#39;//a[@class=&quot;pn-next&quot;]/@href&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">extract_first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">next_url</span><span class="p">:</span>
+            <span class="c1">#补全URL</span>
+            <span class="n">next_url</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">urljoin</span><span class="p">(</span><span class="n">next_url</span><span class="p">)</span>
+            <span class="c1"># print(&quot;下一页{}&quot;.format(next_url))</span>
+            <span class="c1">#构建下一页的请求</span>
+            <span class="k">yield</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">next_url</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;category&#39;</span><span class="p">:</span> <span class="n">category</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">parse_product_base</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="c1">#取出传递过来的数据</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;item&#39;</span><span class="p">]</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1"># print(response.text)</span>
+        <span class="c1">#把json字符串，转换为字典</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="c1">#提取数据</span>
+        <span class="c1"># 1. `product_name`：商品名称</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;wareInfo&#39;</span><span class="p">][</span><span class="s1">&#39;basicInfo&#39;</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="c1"># 2. `product_img_url`：商品图片URL</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_img_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;wareInfo&#39;</span><span class="p">][</span><span class="s1">&#39;basicInfo&#39;</span><span class="p">][</span><span class="s1">&#39;wareImage&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;small&#39;</span><span class="p">]</span>
+        <span class="c1"># 3. `product_book_info`：图书信息,作者，出版社</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_book_info&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;wareInfo&#39;</span><span class="p">][</span><span class="s1">&#39;basicInfo&#39;</span><span class="p">][</span><span class="s1">&#39;bookInfo&#39;</span><span class="p">]</span>
+        <span class="c1"># 4. `product_option`：商品选项</span>
+        <span class="n">color_size</span> <span class="o">=</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..colorSize&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">color_size</span><span class="p">:</span>
+            <span class="c1">#注意：colorSize值是列表，而jsonpath返回列表，color_size是两层列表</span>
+            <span class="n">color_size</span> <span class="o">=</span> <span class="n">color_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">product_option</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">color_size</span><span class="p">:</span>
+                <span class="n">title</span> <span class="o">=</span> <span class="n">option</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="s1">&#39;$..text&#39;</span><span class="p">)</span>
+                <span class="n">product_option</span><span class="p">[</span><span class="n">title</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_option&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">product_option</span>
+        <span class="c1"># else:</span>
+        <span class="c1">#     print(&quot;{} 没有商品选项&quot;.format(response.url))</span>
+
+        <span class="c1"># 5. `product_shop`：商品店铺</span>
+        <span class="n">shop</span> <span class="o">=</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..shop&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">shop</span><span class="p">:</span>
+            <span class="n">shop</span> <span class="o">=</span> <span class="n">shop</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">shop</span><span class="p">:</span>
+                <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_shop&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s1">&#39;shop_id&#39;</span><span class="p">:</span> <span class="n">shop</span><span class="p">[</span><span class="s1">&#39;shopId&#39;</span><span class="p">],</span>
+                    <span class="s1">&#39;shop_name&#39;</span><span class="p">:</span> <span class="n">shop</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span>
+                    <span class="s1">&#39;shop_score&#39;</span><span class="p">:</span> <span class="n">shop</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">],</span>
+                <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_shop&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;shop_name&#39;</span><span class="p">:</span> <span class="s1">&#39;京东自营&#39;</span><span class="p">,</span>
+            <span class="p">}</span>
+
+        <span class="c1"># 6. `product_category_id`：商品类别ID</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_category_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;wareInfo&#39;</span><span class="p">][</span><span class="s1">&#39;basicInfo&#39;</span><span class="p">][</span><span class="s1">&#39;category&#39;</span><span class="p">]</span>
+        <span class="c1">#category:&quot;14065;14137;14140&quot;  需要替换成 &quot;14065,14137,14140&quot;</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_category_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_category_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1">#准备促销信息的URL</span>
+        <span class="n">ad_url</span> <span class="o">=</span> <span class="s1">&#39;https://cd.jd.com/promotion/v2?skuId=</span><span class="si">{}</span><span class="s1">&amp;area=2_2834_51982_0&amp;cat=</span><span class="si">{}</span><span class="s1">&#39;</span>\
+            <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_sku_id&#39;</span><span class="p">],</span> <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_category_id&#39;</span><span class="p">])</span>
+        <span class="c1">#构建促销信息的请求</span>
+        <span class="k">yield</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">ad_url</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parse_product_ad</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;item&#39;</span><span class="p">:</span> <span class="n">item</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">parse_product_ad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;item&#39;</span><span class="p">]</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1"># print(response.text)</span>
+        <span class="c1">#print(response.body.decode(&#39;GBK&#39;))</span>
+        <span class="c1">#把数据转换为字典</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_ad&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..ad&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..ad&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1">#构建评价信息的请求</span>
+        <span class="n">comments_url</span> <span class="o">=</span> <span class="s1">&#39;https://club.jd.com/comment/productCommentSummaries.action?referenceIds=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_sku_id&#39;</span><span class="p">])</span>
+        <span class="k">yield</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">comments_url</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_product_comments</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;item&#39;</span><span class="p">:</span><span class="n">item</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">parse_product_comments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;item&#39;</span><span class="p">]</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1"># print(response.text)</span>
+
+        <span class="c1">#解析商品信息</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="c1">#1. product_comments：商品评论数量</span>
+        <span class="c1">#2. 评价数量，好评数量，差评数量，好评率</span>
+
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_comments&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;CommentCount&#39;</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;CommentsCount&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;CommentCount&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;GoodCount&#39;</span><span class="p">:</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..GoodCount&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s1">&#39;PoorCount&#39;</span><span class="p">:</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..PoorCount&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s1">&#39;GoodRate&#39;</span><span class="p">:</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..GoodRate&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1">#构建价格请求</span>
+        <span class="n">price_url</span> <span class="o">=</span> <span class="s1">&#39;https://p.3.cn/prices/mgets?skuIds=J_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_sku_id&#39;</span><span class="p">])</span>
+        <span class="k">yield</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">price_url</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parse_product_price</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;item&#39;</span><span class="p">:</span> <span class="n">item</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">parse_product_price</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;item&#39;</span><span class="p">]</span>
+        <span class="c1"># print(response.text)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_price&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1">#把商品数据交给引擎 </span>
+        <span class="k">yield</span> <span class="n">item</span>
+</pre></div>
+<h4>7.3 商品爬虫实现分布式</h4>
+<ul>
+<li><p>步骤：</p>
+<ul>
+<li>修改爬虫类</li>
+<li>在settings文件中配置scrapy_redis</li>
+<li>写一个程序用于把MongoDB中分类信息放入到redis_key指定的列表中</li>
+</ul>
+<p>1.修改爬虫类</p>
+</li>
+<li><p>指定继承关系，继承RedisSpider</p>
+</li>
+<li>指定redis_key</li>
+<li>把重写start_requests改写 make_request_from_data<ul>
+<li>注意：使用return返回一个请求对象，不能使用yield</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1">#jd_product.py</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">scrapy</span>
+<span class="kn">from</span> <span class="nn">mall_spider.items</span> <span class="kn">import</span> <span class="n">Product</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">jsonpath</span> <span class="kn">import</span> <span class="n">jsonpath</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+
+<span class="kn">from</span> <span class="nn">scrapy_redis.spiders</span> <span class="kn">import</span> <span class="n">RedisSpider</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">scrapy_redis ：分布式爬虫</span>
+<span class="sd"> 1.修改爬虫类</span>
+<span class="sd">步骤：</span>
+<span class="sd">  - 指定继承关系，继承RedisSpider</span>
+<span class="sd">  - 指定redis_key</span>
+<span class="sd">  - 把重写start_requests改写 make_request_from_data</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">JdProductSpider</span><span class="p">(</span><span class="n">RedisSpider</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;jd_product&#39;</span>
+    <span class="n">allowed_domains</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;jd.com&#39;</span><span class="p">,</span> <span class="s1">&#39;3.cn&#39;</span><span class="p">]</span>
+    <span class="c1"># start_urls = [&#39;http://jd.com/&#39;]</span>
+    <span class="c1"># 2. 用于指定起始url列表，在redis数据库中的key</span>
+    <span class="n">redis_key</span> <span class="o">=</span> <span class="s1">&#39;jd_product:category&#39;</span>
+
+    <span class="c1"># def start_requests(self):</span>
+    <span class="c1">#     &#39;&#39;&#39;重写start_requests方法，根据分类信息构建列表页的请求&#39;&#39;&#39;</span>
+    <span class="c1">#     category = {</span>
+    <span class="c1">#         &quot;b_category_name&quot;: &quot;工业品&quot;,</span>
+    <span class="c1">#         &quot;b_category_url&quot;: &quot;https://imall.jd.com/&quot;,</span>
+    <span class="c1">#         &quot;m_category_name&quot;: &quot;实验用品&quot;,</span>
+    <span class="c1">#         &quot;m_category_url&quot;: &quot;https://i-list.jd.com/list.html?cat=14065,14137&quot;,</span>
+    <span class="c1">#         &quot;s_category_name&quot;: &quot;实验室设备&quot;,</span>
+    <span class="c1">#         &quot;s_category_url&quot;: &quot;https://i-list.jd.com/list.html?cat=14065,14137,14140&quot;</span>
+    <span class="c1">#     }</span>
+    <span class="c1">#</span>
+    <span class="c1">#     # category = {</span>
+    <span class="c1">#     #     &quot;b_category_name&quot;:&quot;家用电器&quot;,</span>
+    <span class="c1">#     #     &quot;b_category_url&quot;:&quot;https://jiadian.jd.com&quot;,</span>
+    <span class="c1">#     #     &quot;m_category_name&quot;: &quot;电视&quot;,</span>
+    <span class="c1">#     #     &quot;m_category_url&quot;: &quot;https://list.jd.com/list.html?cat=737,794,798&quot;,</span>
+    <span class="c1">#     #     &quot;s_category_name&quot;: &quot;超薄电视&quot;,</span>
+    <span class="c1">#     #     &quot;s_category_url&quot;: &quot;https://list.jd.com/list.html?cat=737,794,798&amp;ev=4155_76344&amp;sort=sort_rank_asc&amp;trans=1&amp;JL=2_1_0#J_crumbsBar&quot;</span>
+    <span class="c1">#     # }</span>
+    <span class="c1">#</span>
+    <span class="c1">#     # 根据小分类的url构建列表页面请求</span>
+    <span class="c1">#     yield scrapy.Request(category[&#39;s_category_url&#39;], callback=self.parse, meta={&#39;category&#39;: category})</span>
+
+    <span class="c1">#把重写start_requests改写 make_request_from_data</span>
+    <span class="k">def</span> <span class="nf">make_request_from_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        根据redis中读取的分类信息的二进制信息，构建请求</span>
+<span class="sd">        :param data: 分类信息的二进制数据</span>
+<span class="sd">        :return: 根据小分类URL,构建的请求对象</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#把分类信息的二进制数据转化为字典</span>
+        <span class="n">category</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="c1"># 根据小分类的url构建列表页面请求</span>
+        <span class="c1">#注意，要使用return来返回一个请求，不能使用yield</span>
+        <span class="k">return</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">category</span><span class="p">[</span><span class="s1">&#39;s_category_url&#39;</span><span class="p">],</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;category&#39;</span><span class="p">:</span> <span class="n">category</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="n">category</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;category&#39;</span><span class="p">]</span>
+        <span class="c1">#</span>
+        <span class="c1">#解析列表页，提取商品的skuid</span>
+        <span class="c1"># sku_ids = response.xpath(&#39;//li[contains(@class,&quot;gl-item&quot;)]/@data-sku&#39;).extract()</span>
+        <span class="n">sku_ids</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="s1">&#39;//div[contains(@class, &quot;j-sku-item&quot;)]/@data-sku&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">extract</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sku_ids</span><span class="p">:</span>
+            <span class="n">sku_ids</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="s1">&#39;//li[contains(@class,&quot;gl-item&quot;)]/@data-sku&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">extract</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">sku_id</span> <span class="ow">in</span> <span class="n">sku_ids</span><span class="p">:</span>
+            <span class="c1">#创建Product,用于保存商品数据</span>
+            <span class="c1">#print(sku_id)</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="n">Product</span><span class="p">()</span>
+            <span class="c1">#设置商品类别</span>
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_category&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">category</span>
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_sku_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sku_id</span>
+            <span class="c1">#构建商品的基本信息请求</span>
+            <span class="n">product_base_url</span> <span class="o">=</span> <span class="s1">&#39;https://cdnware.m.jd.com/c1/skuDetail/apple/7.3.0/</span><span class="si">{}</span><span class="s1">.json&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sku_id</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">product_base_url</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parse_product_base</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;item&#39;</span><span class="p">:</span> <span class="n">item</span><span class="p">})</span>
+
+        <span class="c1">#获取下一页的URL</span>
+        <span class="n">next_url</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="s1">&#39;//a[@class=&quot;pn-next&quot;]/@href&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">extract_first</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">next_url</span><span class="p">:</span>
+            <span class="c1">#补全URL</span>
+            <span class="n">next_url</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">urljoin</span><span class="p">(</span><span class="n">next_url</span><span class="p">)</span>
+            <span class="c1"># print(&quot;下一页{}&quot;.format(next_url))</span>
+            <span class="c1">#构建下一页的请求</span>
+            <span class="k">yield</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">next_url</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;category&#39;</span><span class="p">:</span> <span class="n">category</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">parse_product_base</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="c1">#取出传递过来的数据</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;item&#39;</span><span class="p">]</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1"># print(response.text)</span>
+        <span class="c1">#把json字符串，转换为字典</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="c1">#提取数据</span>
+        <span class="c1"># 1. `product_name`：商品名称</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;wareInfo&#39;</span><span class="p">][</span><span class="s1">&#39;basicInfo&#39;</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="c1"># 2. `product_img_url`：商品图片URL</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_img_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;wareInfo&#39;</span><span class="p">][</span><span class="s1">&#39;basicInfo&#39;</span><span class="p">][</span><span class="s1">&#39;wareImage&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;small&#39;</span><span class="p">]</span>
+        <span class="c1"># 3. `product_book_info`：图书信息,作者，出版社</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_book_info&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;wareInfo&#39;</span><span class="p">][</span><span class="s1">&#39;basicInfo&#39;</span><span class="p">][</span><span class="s1">&#39;bookInfo&#39;</span><span class="p">]</span>
+        <span class="c1"># 4. `product_option`：商品选项</span>
+        <span class="n">color_size</span> <span class="o">=</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..colorSize&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">color_size</span><span class="p">:</span>
+            <span class="c1">#注意：colorSize值是列表，而jsonpath返回列表，color_size是两层列表</span>
+            <span class="n">color_size</span> <span class="o">=</span> <span class="n">color_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">product_option</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">color_size</span><span class="p">:</span>
+                <span class="n">title</span> <span class="o">=</span> <span class="n">option</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">option</span><span class="p">,</span> <span class="s1">&#39;$..text&#39;</span><span class="p">)</span>
+                <span class="n">product_option</span><span class="p">[</span><span class="n">title</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_option&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">product_option</span>
+        <span class="c1"># else:</span>
+        <span class="c1">#     print(&quot;{} 没有商品选项&quot;.format(response.url))</span>
+
+        <span class="c1"># 5. `product_shop`：商品店铺</span>
+        <span class="n">shop</span> <span class="o">=</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..shop&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">shop</span><span class="p">:</span>
+            <span class="n">shop</span> <span class="o">=</span> <span class="n">shop</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">shop</span><span class="p">:</span>
+                <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_shop&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s1">&#39;shop_id&#39;</span><span class="p">:</span> <span class="n">shop</span><span class="p">[</span><span class="s1">&#39;shopId&#39;</span><span class="p">],</span>
+                    <span class="s1">&#39;shop_name&#39;</span><span class="p">:</span> <span class="n">shop</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span>
+                    <span class="s1">&#39;shop_score&#39;</span><span class="p">:</span> <span class="n">shop</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">],</span>
+                <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_shop&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;shop_name&#39;</span><span class="p">:</span> <span class="s1">&#39;京东自营&#39;</span><span class="p">,</span>
+            <span class="p">}</span>
+
+        <span class="c1"># 6. `product_category_id`：商品类别ID</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_category_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;wareInfo&#39;</span><span class="p">][</span><span class="s1">&#39;basicInfo&#39;</span><span class="p">][</span><span class="s1">&#39;category&#39;</span><span class="p">]</span>
+        <span class="c1">#category:&quot;14065;14137;14140&quot;  需要替换成 &quot;14065,14137,14140&quot;</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_category_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_category_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1">#准备促销信息的URL</span>
+        <span class="n">ad_url</span> <span class="o">=</span> <span class="s1">&#39;https://cd.jd.com/promotion/v2?skuId=</span><span class="si">{}</span><span class="s1">&amp;area=2_2834_51982_0&amp;cat=</span><span class="si">{}</span><span class="s1">&#39;</span>\
+            <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_sku_id&#39;</span><span class="p">],</span> <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_category_id&#39;</span><span class="p">])</span>
+        <span class="c1">#构建促销信息的请求</span>
+        <span class="k">yield</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">ad_url</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parse_product_ad</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;item&#39;</span><span class="p">:</span> <span class="n">item</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">parse_product_ad</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;item&#39;</span><span class="p">]</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1"># print(response.text)</span>
+        <span class="c1">#print(response.body.decode(&#39;GBK&#39;))</span>
+        <span class="c1">#把数据转换为字典</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_ad&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..ad&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..ad&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1">#构建评价信息的请求</span>
+        <span class="n">comments_url</span> <span class="o">=</span> <span class="s1">&#39;https://club.jd.com/comment/productCommentSummaries.action?referenceIds=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_sku_id&#39;</span><span class="p">])</span>
+        <span class="k">yield</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">comments_url</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_product_comments</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;item&#39;</span><span class="p">:</span><span class="n">item</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">parse_product_comments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;item&#39;</span><span class="p">]</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1"># print(response.text)</span>
+
+        <span class="c1">#解析商品信息</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="c1">#1. product_comments：商品评论数量</span>
+        <span class="c1">#2. 评价数量，好评数量，差评数量，好评率</span>
+
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_comments&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;CommentCount&#39;</span><span class="p">:</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;CommentsCount&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;CommentCount&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;GoodCount&#39;</span><span class="p">:</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..GoodCount&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s1">&#39;PoorCount&#39;</span><span class="p">:</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..PoorCount&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s1">&#39;GoodRate&#39;</span><span class="p">:</span> <span class="n">jsonpath</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;$..GoodRate&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1">#构建价格请求</span>
+        <span class="n">price_url</span> <span class="o">=</span> <span class="s1">&#39;https://p.3.cn/prices/mgets?skuIds=J_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_sku_id&#39;</span><span class="p">])</span>
+        <span class="k">yield</span> <span class="n">scrapy</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">price_url</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parse_product_price</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;item&#39;</span><span class="p">:</span> <span class="n">item</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">parse_product_price</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;item&#39;</span><span class="p">]</span>
+        <span class="c1"># print(response.text)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">item</span><span class="p">[</span><span class="s1">&#39;product_price&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;p&#39;</span><span class="p">]</span>
+        <span class="c1"># print(item)</span>
+        <span class="c1">#把商品数据交给引擎</span>
+        <span class="k">yield</span> <span class="n">item</span>
+</pre></div>
+<p>2.在settings文件中配置scrapy_redis</p>
+<ul>
+<li>直接拷贝scrapy_redis配置信息，到settings中</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1">#settings.py</span>
+
+<span class="c1"># 在settings文件中配置scrapy_redis</span>
+<span class="c1"># REDIS数据链接</span>
+<span class="n">REDIS_URL</span> <span class="o">=</span> <span class="s1">&#39;redis://127.0.0.1:6379/0&#39;</span>
+
+<span class="c1"># 去重容器类: 用于把已爬指纹存储到基于Redis的set集合中</span>
+<span class="n">DUPEFILTER_CLASS</span> <span class="o">=</span> <span class="s2">&quot;scrapy_redis.dupefilter.RFPDupeFilter&quot;</span>
+<span class="c1"># 调度器: 用于把待爬请求存储到基于Redis的队列</span>
+<span class="n">SCHEDULER</span> <span class="o">=</span> <span class="s2">&quot;scrapy_redis.scheduler.Scheduler&quot;</span>
+<span class="c1"># 是不进行调度持久化:</span>
+<span class="c1"># 如果是True, 当程序结束的时候, 会保留Redis中已爬指纹和待爬的请求</span>
+<span class="c1"># 如果是False, 当程序结束的时候, 会清空Redis中已爬指纹和待爬的请求</span>
+<span class="n">SCHEDULER_PERSIST</span> <span class="o">=</span> <span class="kc">True</span>
+</pre></div>
+<ol>
+<li>写一个程序用于把MongoDB中分类信息，放入到redis_key的列表中</li>
+</ol>
+<ul>
+<li>在项目文件夹下创建add_category_to_redis.py</li>
+<li>实现方法：<ul>
+<li>链接MongoDB</li>
+<li>链接Redis</li>
+<li>读取MongoDB中分类信息，序列化后，添加到商品爬虫redis_key指定的list</li>
+<li>关闭MongoDB</li>
+</ul>
+</li>
+<li>在  if <code>__name__ == '__main__':</code>中调用add_category_to_redis 方法</li>
+<li>代码：</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1">#add_category_to_redis</span>
+
+
+<span class="kn">from</span> <span class="nn">pymongo</span> <span class="kn">import</span> <span class="n">MongoClient</span>
+<span class="kn">from</span> <span class="nn">redis</span>  <span class="kn">import</span> <span class="n">StrictRedis</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">from</span> <span class="nn">mall_spider.settings</span> <span class="kn">import</span> <span class="n">MONGODB_URL</span><span class="p">,</span> <span class="n">REDIS_URL</span>
+<span class="kn">from</span> <span class="nn">mall_spider.spiders.jd_product</span> <span class="kn">import</span> <span class="n">JdProductSpider</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">3. 写一个程序用于把MongoDB中分类信息，放入到redis_key的列表中</span>
+
+<span class="sd">- 在项目文件夹下创建add_category_to_redis.py</span>
+<span class="sd">- 实现方法：</span>
+<span class="sd">  - 链接MongoDB</span>
+<span class="sd">  - 链接Redis</span>
+<span class="sd">  - 读取MongoDB中分类信息，序列化后，添加到商品爬虫redis_key指定的list</span>
+<span class="sd">  - 关闭MongoDB</span>
+<span class="sd">- 在  if `__name__ == &#39;__main__&#39;:`中调用add_category_to_redis 方法</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="k">def</span> <span class="nf">add_category_to_redis</span><span class="p">():</span>
+    <span class="c1">#链接MongoDB</span>
+    <span class="n">mongo</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span><span class="n">MONGODB_URL</span><span class="p">)</span>
+    <span class="c1">#链接Redis</span>
+    <span class="n">redis</span> <span class="o">=</span> <span class="n">StrictRedis</span><span class="o">.</span><span class="n">from_url</span><span class="p">(</span><span class="n">REDIS_URL</span><span class="p">)</span>
+    <span class="c1">#读取MongoDB中分类信息，序列化后，添加到商品爬虫redis_key指定的list</span>
+    <span class="n">collection</span> <span class="o">=</span> <span class="n">mongo</span><span class="p">[</span><span class="s1">&#39;jd&#39;</span><span class="p">][</span><span class="s1">&#39;category&#39;</span><span class="p">]</span>
+    <span class="c1">#读取分类信息</span>
+    <span class="n">cursor</span> <span class="o">=</span> <span class="n">collection</span><span class="o">.</span><span class="n">find</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="c1">#序列化字典数据</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+        <span class="c1">#添加到商品爬虫redis_key指定的list</span>
+        <span class="n">redis</span><span class="o">.</span><span class="n">lpush</span><span class="p">(</span><span class="n">JdProductSpider</span><span class="o">.</span><span class="n">redis_key</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="c1">#关闭MongoDB</span>
+    <span class="n">mongo</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">add_category_to_redis</span><span class="p">()</span>
+</pre></div>
+<h4>8.保存商品数据</h4>
+<ul>
+<li>步骤：<ul>
+<li>实现存储商品Pipline类</li>
+<li>在settings.py中开启这个管道</li>
+</ul>
+</li>
+<li>实现存储商品Pipline类<ul>
+<li>在open_spider方法，建立MongoDB数据库连接，获取要操作的集合</li>
+<li>在process_item方法中，把数据插入到MongoDB中</li>
+<li>在close_spider方法，关闭数据库连接</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1">#pipeline.py</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1">#pipelines.py</span>
+
+<span class="c1"># Define your item pipelines here</span>
+<span class="c1">#</span>
+<span class="c1"># Don&#39;t forget to add your pipeline to the ITEM_PIPELINES setting</span>
+<span class="c1"># See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">6.1 实现分类保存的Pipline类</span>
+<span class="sd">  1. open_spider 方法中，链接MongoDB数据库，获取要操作的集合</span>
+<span class="sd">  2. process_item 方法中，向MongoDB中插入类别数据</span>
+<span class="sd">  3. close_spider 方法中，关闭MongoDB的链接</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">mall_spider.spiders.jd_category</span> <span class="kn">import</span> <span class="n">JdCategorySpider</span>
+<span class="kn">from</span> <span class="nn">pymongo</span> <span class="kn">import</span> <span class="n">MongoClient</span>
+<span class="kn">from</span> <span class="nn">mall_spider.settings</span> <span class="kn">import</span> <span class="n">MONGODB_URL</span>
+
+
+<span class="k">class</span> <span class="nc">CategoryPipeline</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">open_spider</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spider</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;当爬虫启动的时候执行&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spider</span><span class="p">,</span> <span class="n">JdCategorySpider</span><span class="p">):</span>
+            <span class="c1">#1. open_spider 方法中，链接MongoDB数据库，获取要操作的集合</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span><span class="n">MONGODB_URL</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">collections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">[</span><span class="s1">&#39;jd&#39;</span><span class="p">][</span><span class="s1">&#39;category&#39;</span><span class="p">]</span>
+
+
+
+    <span class="k">def</span> <span class="nf">process_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">spider</span><span class="p">):</span>
+        <span class="c1">#  2. process_item 方法中，向MongoDB中插入类别数据</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spider</span><span class="p">,</span> <span class="n">JdCategorySpider</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">insert_one</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">item</span>
+
+    <span class="k">def</span> <span class="nf">close_spider</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spider</span><span class="p">):</span>
+        <span class="c1">#  3. close_spider 方法中，关闭MongoDB的链接</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spider</span><span class="p">,</span> <span class="n">JdCategorySpider</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">实现存储商品Pipline类</span>
+
+<span class="sd">- 在open_spider方法，建立MongoDB数据库连接，获取要操作的集合</span>
+<span class="sd">- 在process_item方法中，把数据插入到MongoDB中</span>
+<span class="sd">- 在close_spider方法，关闭数据库连接</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">mall_spider.spiders.jd_product</span> <span class="kn">import</span> <span class="n">JdProductSpider</span>
+<span class="k">class</span> <span class="nc">ProductPipeline</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">open_spider</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spider</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;当爬虫启动的时候执行&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spider</span><span class="p">,</span> <span class="n">JdProductSpider</span><span class="p">):</span>
+            <span class="c1">#1. open_spider 方法中，链接MongoDB数据库，获取要操作的集合</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">MongoClient</span><span class="p">(</span><span class="n">MONGODB_URL</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">collections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">[</span><span class="s1">&#39;jd&#39;</span><span class="p">][</span><span class="s1">&#39;product&#39;</span><span class="p">]</span>
+
+
+
+    <span class="k">def</span> <span class="nf">process_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">spider</span><span class="p">):</span>
+        <span class="c1">#  2. process_item 方法中，向MongoDB中插入类别数据</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spider</span><span class="p">,</span> <span class="n">JdProductSpider</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">insert_one</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">item</span>
+
+    <span class="k">def</span> <span class="nf">close_spider</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spider</span><span class="p">):</span>
+        <span class="c1">#  3. close_spider 方法中，关闭MongoDB的链接</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spider</span><span class="p">,</span> <span class="n">JdProductSpider</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+<ul>
+<li>在settings.py中开启这个管道</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1">#settings.py</span>
+<span class="n">ITEM_PIPELINES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;mall_spider.pipelines.ProductPipeline&#39;</span><span class="p">:</span> <span class="mi">301</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+<h4>9. 实现下载器中间件</h4>
+<p>为了避免IP反爬，我们实现随机User-Agent和代理IP的中间件</p>
+<ul>
+<li>步骤：<ul>
+<li>实现随机Use-Agent的中间件</li>
+<li>实现代理IP中间件</li>
+<li>在settings.py文件开启下载器中间件</li>
+</ul>
+</li>
+<li>实现随机Use-Agent的中间件<ul>
+<li>步骤：<ul>
+<li>准备User-Agent列表</li>
+<li>在middlewares.py中实现RandomUserAgent类</li>
+<li>实现process_request方法<ul>
+<li>如果请求是<a href="https://cdnware.m.jd.com">https://cdnware.m.jd.com</a> 开头的，就是设置一个Iphone的User-Agent列表中随机取出一个</li>
+<li>否则从User-Agent列表中随机取出一个</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>代码：</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1">#middlewares.py</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">1.准备User-Agent列表</span>
+<span class="sd">2.在middlewares.py中实现RandomUserAgent类</span>
+<span class="sd">3.实现process_request方法</span>
+<span class="sd">    如果请求是https://cdnware.m.jd.com 开头的，就是设置一个Iphone的User-Agent列表中随机取出一个</span>
+<span class="sd">    否则从User-Agent列表中随机取出一个</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1">#1.准备User-Agent列表</span>
+<span class="n">USER_AGENTS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (Windows; U; Windows NT 6.1; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (Windows NT 10.0; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; .NET4.0C; .NET4.0E; .NET CLR 2.0.50727; .NET CLR 3.0.30729; .NET CLR 3.5.30729; InfoPath.3; rv:11.0) like Gecko&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:2.0.1) Gecko/20100101 Firefox/4.0.1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20100101 Firefox/4.0.1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Opera/9.80 (Macintosh; Intel Mac OS X 10.6.8; U; en) Presto/2.8.131 Version/11.11&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Opera/9.80 (Windows NT 6.1; U; en) Presto/2.8.131 Version/11.11&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_0) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.56 Safari/535.11&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Maxthon 2.0)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; TencentTraveler 4.0)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; The World)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Trident/4.0; SE 2.X MetaSr 1.0; SE 2.X MetaSr 1.0; .NET CLR 2.0.50727; SE 2.X MetaSr 1.0)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; 360SE)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Avant Browser)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (iPod; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (iPad; U; CPU OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (Linux; U; Android 2.3.7; en-us; Nexus One Build/FRF91) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MQQBrowser/26 Mozilla/5.0 (Linux; U; Android 2.3.7; zh-cn; MB200 Build/GRJ22; CyanogenMod-7) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Opera/9.80 (Android 2.3.4; Linux; Opera Mobi/build-1107180945; U; en-GB) Presto/2.8.149 Version/11.10&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (Linux; U; Android 3.0; en-us; Xoom Build/HRI39) AppleWebKit/534.13 (KHTML, like Gecko) Version/4.0 Safari/534.13&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (BlackBerry; U; BlackBerry 9800; en) AppleWebKit/534.1+ (KHTML, like Gecko) Version/6.0.0.337 Mobile Safari/534.1+&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (hp-tablet; Linux; hpwOS/3.0.0; U; en-US) AppleWebKit/534.6 (KHTML, like Gecko) wOSBrowser/233.70 Safari/534.6 TouchPad/1.0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (SymbianOS/9.4; Series60/5.0 NokiaN97-1/20.0.019; Profile/MIDP-2.1 Configuration/CLDC-1.1) AppleWebKit/525 (KHTML, like Gecko) BrowserNG/7.1.18124&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/5.0 (compatible; MSIE 9.0; Windows Phone OS 7.5; Trident/5.0; IEMobile/9.0; HTC; Titan)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;UCWEB7.0.2.37/28/999&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NOKIA5700/ UCWEB7.0.2.37/28/999&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Openwave/ UCWEB7.0.2.37/28/999&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Mozilla/4.0 (compatible; MSIE 6.0; ) Opera/UCWEB7.0.2.37/28/999&quot;</span><span class="p">,</span>
+    <span class="c1"># iPhone 6：</span>
+    <span class="c1">#&quot;Mozilla/6.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/8.0 Mobile/10A5376e Safari/8536.25&quot;,</span>
+<span class="p">]</span>
+
+<span class="c1"># 2.在middlewares.py中实现RandomUserAgent类</span>
+<span class="k">class</span> <span class="nc">RandomUserAgent</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="c1"># 3.实现process_request方法</span>
+    <span class="k">def</span> <span class="nf">process_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">spider</span><span class="p">):</span>
+        <span class="c1">#如果请求是https://cdnware.m.jd.com 开头的，就是设置一个Iphone的User-Agent列表中随机取出一个</span>
+        <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;https://cdnware.m.jd.com&#39;</span><span class="p">):</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;user-agent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Mozilla/6.0 (iPhone; CPU iPhone OS 8_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/8.0 Mobile/10A5376e Safari/8536.25&#39;</span>
+        <span class="c1">#否则从User-Agent列表中随机取出一个</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;user-agent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">USER_AGENTS</span><span class="p">)</span>
+</pre></div>
+<ul>
+<li>实现代理IP中间件<ul>
+<li>步骤：<ul>
+<li>在middlewares.py中，实现ProxyMiddleware类</li>
+<li>实现process_request方法<ul>
+<li>从代理池中获取一个随机的代理IP，需要指定代理IP的协议和访问的域名</li>
+<li>设置给request.meta['proxy']</li>
+</ul>
+</li>
+<li>实现process_exception方法<ul>
+<li>当请求出现异常的时候，代理池哪些代理IP在本域名下是不可以用的</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>代码：</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1">#middlewares.py</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">- 在middlewares.py中，实现ProxyMiddleware类</span>
+<span class="sd">- 实现process_request方法</span>
+<span class="sd">  - 从代理池中获取一个随机的代理IP，需要指定代理IP的协议和访问的域名</span>
+<span class="sd">  - 设置给request.meta[&#39;proxy&#39;]</span>
+<span class="sd">- 实现process_exception方法</span>
+<span class="sd">  - 当请求出现异常的时候，代理池哪些代理IP在本域名下是不可以用的</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">scrapy.downloadermiddlewares.retry</span> <span class="kn">import</span> <span class="n">RetryMiddleware</span>
+<span class="kn">from</span> <span class="nn">twisted.internet</span> <span class="kn">import</span> <span class="n">defer</span>
+<span class="kn">from</span> <span class="nn">twisted.internet.error</span> <span class="kn">import</span> <span class="ne">TimeoutError</span><span class="p">,</span> <span class="n">DNSLookupError</span><span class="p">,</span> \
+        <span class="ne">ConnectionRefusedError</span><span class="p">,</span> <span class="n">ConnectionDone</span><span class="p">,</span> <span class="n">ConnectError</span><span class="p">,</span> \
+        <span class="n">ConnectionLost</span><span class="p">,</span> <span class="n">TCPTimedOutError</span>
+<span class="kn">from</span> <span class="nn">twisted.web.client</span> <span class="kn">import</span> <span class="n">ResponseFailed</span>
+<span class="kn">from</span> <span class="nn">scrapy.core.downloader.handlers.http11</span> <span class="kn">import</span> <span class="n">TunnelError</span>
+
+<span class="k">class</span> <span class="nc">ProxyMiddleware</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">EXCEPTIONS_TO_RETRY</span> <span class="o">=</span> <span class="p">(</span><span class="n">defer</span><span class="o">.</span><span class="n">TimeoutError</span><span class="p">,</span> <span class="ne">TimeoutError</span><span class="p">,</span> <span class="n">DNSLookupError</span><span class="p">,</span>
+                           <span class="ne">ConnectionRefusedError</span><span class="p">,</span> <span class="n">ConnectionDone</span><span class="p">,</span> <span class="n">ConnectError</span><span class="p">,</span>
+                           <span class="n">ConnectionLost</span><span class="p">,</span> <span class="n">TCPTimedOutError</span><span class="p">,</span> <span class="n">ResponseFailed</span><span class="p">,</span>
+                           <span class="ne">IOError</span><span class="p">,</span> <span class="n">TunnelError</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">process_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">spider</span><span class="p">):</span>
+      <span class="c1">#实现process_request方法</span>
+      <span class="c1">#从代理池中获取一个随机的代理IP，需要指定代理IP的协议和访问的域名</span>
+      <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;http://localhost:16888/random?protocol=https&amp;domain=jd.com&#39;</span><span class="p">)</span>
+      <span class="c1">#设置给request.meta[&#39;proxy&#39;]</span>
+      <span class="n">request</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;proxy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+      <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">process_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">exception</span><span class="p">,</span> <span class="n">spider</span><span class="p">):</span>
+        <span class="c1"># 当请求出现异常的时候，代理池哪些代理IP在本域名下是不可以用的</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exception</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">EXCEPTIONS_TO_RETRY</span><span class="p">):</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;http://localhost:16888/disable_domain&#39;</span>
+            <span class="n">proxy</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;proxy&#39;</span><span class="p">]</span>
+            <span class="n">ip</span> <span class="o">=</span> <span class="n">proxy</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">proxy</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># port = proxy.split(&#39;:&#39;)[-1]</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;ip&#39;</span> <span class="p">:</span> <span class="n">ip</span><span class="p">,</span>
+                <span class="s1">&#39;domain&#39;</span> <span class="p">:</span> <span class="s1">&#39;jd.com&#39;</span>
+            <span class="p">}</span>
+            <span class="c1">#发送请求，告诉代理池这个代理IP在本域名下是不可用的</span>
+            <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;IP:</span><span class="si">{}</span><span class="s1"> 不可用在jd.com&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ip</span><span class="p">))</span>
+</pre></div>
+<ul>
+<li>在settings.py中开启上面两个下载器中间件</li>
+</ul>
+<div class="highlight"><pre><span></span><span class="c1">#settings.py</span>
+
+<span class="n">DOWNLOADER_MIDDLEWARES</span> <span class="o">=</span> <span class="p">{</span>
+   <span class="s1">&#39;mall_spider.middlewares.RandomUserAgent&#39;</span><span class="p">:</span> <span class="mi">300</span><span class="p">,</span>
+   <span class="s1">&#39;mall_spider.middlewares.ProxyMiddleware&#39;</span><span class="p">:</span> <span class="mi">301</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+<ul>
+<li><p>测试是否可用：</p>
+<ul>
+<li><p>开启已经配置好的<a href="https://juejin.im/post/5d525b1af265da03b31bc2d5">MongoDB</a></p>
+<ul>
+<li><blockquote><p><code>net start mongodb</code></p>
+<p><code>mongo</code></p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p><a href="https://liukanshan.club/archives/2020-05-09-Proxy_Pool/">开启代理池的API接口</a></p>
+</li>
+<li><p><a href="https://www.w3cschool.cn/redis/redis-install.html">开启Redis</a></p>
+</li>
+<li><p>执行：<code>scrapy crawl jd_product</code></p>
+</li>
+</ul>
+</li>
+</ul>
+
+            </div>
+        </article>
+        <div id="ga-tags">
+    
+    <span class="ga-tag">
+        <a class="ga-highlight" href="https://liukanshan.club/tag/京东全网爬虫/">#京东全网爬虫</a>
+    </span>
+    
+</div>
+    </section>
+
+    
+<section id="ga-content_pager">
+
+    <div class="next">
+        <h3>没有了</h3>
+        <p class="yue">这是最新的文章</p>
+    </div>
+
+
+    <div class="prev">
+        <a class="ga-highlight" href="https://liukanshan.club/archives/2020-05-22-Urls/">Url合集</a>
+        <p class="yue">平时用到过的收藏链接整理</p>
+    </div>
+
+</section>
+
+
+    
+        <script>
+            var initValine = function () {
+                new Valine({"enable": true, "el": "#vcomments", "appId": "3q2N2bl6O7mcynxWMT9ALXHP-gzGzoHsz", "appKey": "y3wuu6FerG8j7BCh5X9wA4X7", "visitor": true, "recordIP": true, "placeholder": "\u4ea4\u6d41\u4ea4\u6d41\uff1f"});
+            }
+        </script>
+        <script defer src='https://cdn.jsdelivr.net/npm/valine@1.3.10/dist/Valine.min.js' onload="initValine()"></script>
+        <div id="vcomments"></div>
+    
+
+</main>
+
+                <footer class="ga-mono" id="ga-footer">
+                    <section>
+                        <span id="ga-uptime"></span>
+                        <span class="brand">刘看山的博客</span>
+                    </section>
+                    <section>
+                        <p class="copyright">
+                            <span>Copyright © 2020 Kanshan</span>
+                            <span>Powered by <a no-style href="https://github.com/AlanDecode/Maverick" target="_blank">Maverick & Galileo</a></span>
+                        </p>
+                        <div class="copyright">
+                            <span class="footer-addon">
+                                
+                            </span>
+                            <nav class="social-links">
+                                <ul><li><a class="no-style" title="GitHub" href="https://github.com/Kanshan28" target="_blank"><i class="gi gi-github"></i>GitHub</a></li><span class="separator">·</span><li><a class="no-style" title="Weibo" href="https://weibo.com/5366743913/" target="_blank"><i class="gi gi-weibo"></i>Weibo</a></li></ul>
+                            </nav>
+                        </div>
+                    </section>
+                    <script>
+                        var site_build_date = "2020-04-29T17:40+08:00"
+                    </script>
+                    <script src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/galileo-dc4baa7cf4.js"></script>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!--katex-->
+    <script defer src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/katex.min.js"></script>
+    <script>
+    mathOpts = {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "$", right: "$", display: false},
+            {left: "\\(", right: "\\)", display: false}
+        ]
+    };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/auto-render.min.js" onload="renderMathInElement(document.body, mathOpts);"></script>
+
+    <script src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/ExSearch/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/Kanshan28/Blog@gh-pages/assets/ExSearch/ExSearch-493cb9cd89.js"></script>
+
+    
+    </body>
+</html>
